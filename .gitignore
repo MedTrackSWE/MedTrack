@@ -2,4 +2,6 @@ Medtrack.session.sql
 
 .env
 
+backup_mysql.bat
+
 settings.json
