@@ -11,13 +11,15 @@ CREATE TABLE Users (
 -- Appointments table
 CREATE TABLE Appointments (
     appointment_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    appointment_time DATETIME NOT NULL,
+    user_id INT,
     hospital_id INT NOT NULL,
-    status ENUM('Scheduled', 'Cancelled', 'Completed') DEFAULT 'Scheduled',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES Users(user_id)
+    appointment_time DATETIME NOT NULL,
+    status ENUM('Scheduled', 'Cancelled', 'Completed', 'Available') DEFAULT 'Available',
+    FOREIGN KEY (user_id) REFERENCES Users(user_id),
+    FOREIGN KEY (hospital_id) REFERENCES Hospitals(hospital_id),
+    CHECK (status != 'Available' OR user_id IS NULL)
 );
+
 
 -- Medical history table
 CREATE TABLE Medical_History (
@@ -28,3 +30,11 @@ CREATE TABLE Medical_History (
     report_date DATE,
     FOREIGN KEY (user_id) REFERENCES Users(user_id)
 );
+
+CREATE TABLE Hospitals (
+    hospital_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    address VARCHAR(255) NOT NULL,
+    phone_number VARCHAR(50)
+);
+
