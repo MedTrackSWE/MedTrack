@@ -47,7 +47,7 @@ const LoginForm: React.FC = () => {
                 />
                 {error && <Alert color="danger">{error}</Alert>}
                 <div className="d-grid gap-2 mt-3">
-                  <Button color="primary" onClick={() => {}}>
+                  <Button color="secondary" onClick={() => {}}>
                     Login
                   </Button>
                 </div>
