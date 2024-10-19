@@ -1,9 +1,9 @@
 import React, { useState, FormEvent } from 'react';
-import Button from './assets/components/Button';
-import Input from './assets/components/Input';
-import Alert from './assets/components/Alert';
+import Button from "./assets/components/Button";
+import Input from "./assets/components/Input";
+import Alert from "./assets/components/Alert";
 
-const LoginForm: React.FC = () => {
+const App: React.FC = () => {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [error, setError] = useState<string>('');
@@ -14,13 +14,18 @@ const LoginForm: React.FC = () => {
       console.log('Login attempt with:', { email, password });
       setError('');
 
-
       // Add your authentication logic here
-
-
+      
     } else {
       setError('Please enter both email and password');
     }
+  };
+
+  const handleSignUpClick = () => {
+    console.log('Sign up clicked');
+    // Add your sign up logic here
+    // For example, you could navigate to a sign-up page or open a modal
+    // alert('Sign up functionality would be implemented here');
   };
 
   return (
@@ -47,11 +52,17 @@ const LoginForm: React.FC = () => {
                 />
                 {error && <Alert color="danger">{error}</Alert>}
                 <div className="d-grid gap-2 mt-3">
-                  <Button color="secondary" onClick={() => {}}>
-                    Login
+                  <Button color="primary" onClick={() => {}}>
+                    Sign In
                   </Button>
                 </div>
               </form>
+              <div className="mt-3 text-center">
+                <p className="mb-2 text-muted" style={{ fontSize: '0.9rem' }}>Don't Have an Account?</p>
+                <Button color="secondary" onClick={handleSignUpClick}>
+                  Sign Up
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -60,4 +71,4 @@ const LoginForm: React.FC = () => {
   );
 };
 
-export default LoginForm;
+export default App;
