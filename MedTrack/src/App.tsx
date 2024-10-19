@@ -15,7 +15,7 @@ const App: React.FC = () => {
       setError('');
 
       // Add your authentication logic here
-      
+
     } else {
       setError('Please enter both email and password');
     }
