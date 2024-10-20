@@ -13,7 +13,7 @@ const App: React.FC = () => {
     e.preventDefault();
     if (email && password) {
       try {
-        const response = await fetch('http://localhost:5000/api/login', {
+        const response = await fetch('http://localhost:5000/api/login', {//this is the route that is taken
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
