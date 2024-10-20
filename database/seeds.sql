@@ -1,9 +1,9 @@
 -- Insert data into the Users table
 INSERT INTO Users (username, password_hash, email)
 VALUES 
-  ('user1', '$2b$12$hashedPasswordHere', 'user1@example.com'),
-  ('user2', '$2b$12$hashedPasswordHere', 'user2@example.com'),
-  ('user3', '$2b$12$hashedPasswordHere', 'user3@example.com');
+  ('$2b$12$hashedPasswordHere', 'user1@example.com'),
+  ('$2b$12$hashedPasswordHere', 'user2@example.com'),
+  ('$2b$12$hashedPasswordHere', 'user3@example.com');
 
 -- Insert data into the Appointments table
 INSERT INTO Appointments (user_id, appointment_time, hospital_id, status)
