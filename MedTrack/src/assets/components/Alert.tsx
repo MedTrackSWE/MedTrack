@@ -1,4 +1,5 @@
 import React from "react";
+
 interface AlertProps {
     children: string;
     color: string;
