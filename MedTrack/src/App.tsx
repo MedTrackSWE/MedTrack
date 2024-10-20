@@ -7,25 +7,40 @@ const App: React.FC = () => {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [error, setError] = useState<string>('');
+  const [message, setMessage] = useState<string>('');
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (email && password) {
-      console.log('Login attempt with:', { email, password });
-      setError('');
-
-      // Add your authentication logic here
-
+      try {
+        const response = await fetch('http://localhost:5000/api/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password }),
+        });
+        const data = await response.json();
+        if (response.ok) {
+          setMessage(data.message);
+          setError('');
+        } else {
+          setError(data.error);
+          setMessage('');
+        }
+      } catch (error) {
+        setError('An error occurred. Please try again.');
+        setMessage('');
+      }
     } else {
       setError('Please enter both email and password');
     }
   };
 
-  const handleSignUpClick = () => {
-    console.log('Sign up clicked');
-    // Add your sign up logic here
-    // For example, you could navigate to a sign-up page or open a modal
-    // alert('Sign up functionality would be implemented here');
+  const handleSignUpClick = async () => {
+    //create sign up logic
+    // change page and new button
+    console.log("Sign up pressed")
   };
 
   return (
@@ -51,8 +66,9 @@ const App: React.FC = () => {
                   label="Password"
                 />
                 {error && <Alert color="danger">{error}</Alert>}
+                {message && <Alert color="success">{message}</Alert>}
                 <div className="d-grid gap-2 mt-3">
-                  <Button color="primary" onClick={() => {}}>
+                  <Button color="primary" type="submit">
                     Sign In
                   </Button>
                 </div>
