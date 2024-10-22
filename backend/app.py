@@ -1,12 +1,23 @@
+import mysql.connector
+import os
+from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 CORS(app)  
-
+env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
+load_dotenv(dotenv_path=env_path)
 # In a real application, you'd use a database instead of this dictionary
-users = {}
+# Database connection setup using environment variables
+def get_db_connection():
+    return mysql.connector.connect(
+        host=os.getenv('DB_HOST'),
+        user=os.getenv('DB_USER'),
+        password=os.getenv('DB_PASSWORD'),
+        database=os.getenv('DB_NAME')
+    )
 
 # @app.route('/api/signup', methods=['POST'])
 # def signup():
@@ -34,13 +45,25 @@ def login():
     if not email or not password:
         return jsonify({"error": "Email and password are required"}), 400
     
-    if email not in users:
-        return jsonify({"error": "User not found"}), 404
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
     
-    if check_password_hash(users[email], password):
-        return jsonify({"message": "Login successful"}), 200
-    else:
-        return jsonify({"error": "Invalid credentials"}), 401
+    try:
+        cursor.execute("SELECT * FROM Users WHERE email = %s", (email,))
+        user = cursor.fetchone()
 
+        if user is None:
+            return jsonify({"error": "User not found"}), 404
+
+        if check_password_hash(user['password_hash'], password):
+            return jsonify({"message": "Login successful"}), 200
+        else:
+            return jsonify({"error": "Invalid credentials"}), 401
+    
+    finally:
+        cursor.close()
+        connection.close()
+
+    
 if __name__ == '__main__':
     app.run(debug=True)
