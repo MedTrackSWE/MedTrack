@@ -9,10 +9,7 @@ app = Flask(__name__)
 CORS(app)  
 env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
 load_dotenv(dotenv_path=env_path)
-# print(f"DB_HOST={os.getenv('DB_HOST')}")
-# print(f"DB_USER={os.getenv('DB_USER')}")
-# print(f"DB_PASSWORD={os.getenv('DB_PASSWORD')}")
-# print(f"DB_NAME={os.getenv('DB_NAME')}")
+
 def get_db_connection():
     return mysql.connector.connect(
         host=os.getenv('DB_HOST'),
@@ -93,6 +90,5 @@ def login():
         cursor.close()
         connection.close()
 
-    
 if __name__ == '__main__':
     app.run(debug=True)

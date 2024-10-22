@@ -12,26 +12,54 @@ def client():
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
 
-    # Backup existing data
-    cursor.execute("SELECT * FROM Users")
-    backup_data = cursor.fetchall()
+    # Disable foreign key checks to allow deletion during setup
+    cursor.execute("SET FOREIGN_KEY_CHECKS=0")
 
-    # Clean the table for the tests
+    # Backup existing data from both Users and Appointments
+    cursor.execute("SELECT * FROM Users")
+    backup_users = cursor.fetchall()
+
+    cursor.execute("SELECT * FROM Appointments")
+    backup_appointments = cursor.fetchall()
+
+    # Clean both tables for the tests
+    cursor.execute("DELETE FROM Appointments")
     cursor.execute("DELETE FROM Users")
     connection.commit()
 
+    # Enable foreign key checks after cleanup
+    cursor.execute("SET FOREIGN_KEY_CHECKS=1")
+
     yield client
 
-    # Restore original data after the tests
-    for user in backup_data:
+    # Restore original data in Users table
+    for user in backup_users:
         cursor.execute(
             "INSERT INTO Users (user_id, email, password_hash, created_at, updated_at) VALUES (%s, %s, %s, %s, %s)",
             (user['user_id'], user['email'], user['password_hash'], user['created_at'], user['updated_at'])
         )
+
+    # Restore original data in Appointments table
+    for appointment in backup_appointments:
+        cursor.execute(
+            "INSERT INTO Appointments (appointment_id, user_id, date, details) VALUES (%s, %s, %s, %s)",
+            (appointment['appointment_id'], appointment['user_id'], appointment['date'], appointment['details'])
+        )
+
     connection.commit()
 
     cursor.close()
     connection.close()
+
+def test_database_connection(client):
+    try:
+        connection = get_db_connection()  # Use the existing function to get the DB connection
+        assert connection.is_connected()
+    except mysql.connector.Error as err:
+        pytest.fail(f"Database connection failed: {err}")
+    finally:
+        if connection.is_connected():
+            connection.close()
 
 def test_signup_success(client):
     # Simulate a signup request
