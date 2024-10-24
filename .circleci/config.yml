@@ -6,12 +6,12 @@ jobs:
   test-python:
     docker:
       - image: cimg/python:3.13-node
-      - image: circleci/mysql:8.0  # Add MySQL 8.0 service
+      - image: circleci/mysql:8.0      # MySQL service
         environment:
-          MYSQL_ROOT_PASSWORD: rootpassword  # Set a root password
-          MYSQL_DATABASE: testdb  # Name of the database to be created
-          MYSQL_USER: user
-          MYSQL_PASSWORD: password
+          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_DATABASE: testdb             # The database to be created (use env var)
+          MYSQL_USER: user                   # MySQL user (use env var)
+          MYSQL_PASSWORD: password           # MySQL password (use env var)
     working_directory: ~/project/backend
     steps:
       - checkout:
@@ -25,25 +25,28 @@ jobs:
               echo "Waiting for MySQL..."
               sleep 3
             done
-      # Install MySQL client
+      # Install MySQL client in the main container
       - run:
           name: Install MySQL client
           command: sudo apt-get update && sudo apt-get install -y mysql-client
-      # Load environment variables from .env file
+      # Dynamically create the database and user using env variables
       - run:
-          name: Load environment variables
-          command: export $(cat ../.env | xargs)
-      # Install Python dependencies
-      - python/install-packages
-      # Set up the database using init.sql
+          name: Create MySQL User and Database
+          command: |
+            mysql -u root -prootpassword -h 127.0.0.1 -e "CREATE DATABASE IF NOT EXISTS ${MYSQL_DATABASE};"
+            mysql -u root -prootpassword -h 127.0.0.1 -e "CREATE USER IF NOT EXISTS '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';"
+            mysql -u root -prootpassword -h 127.0.0.1 -e "GRANT ALL PRIVILEGES ON ${MYSQL_DATABASE}.* TO '${MYSQL_USER}'@'%';"
+            mysql -u root -prootpassword -h 127.0.0.1 -e "FLUSH PRIVILEGES;"
+      # Run the MySQL initialization script (init.sql)
       - run:
           name: Initialize MySQL Database with init.sql
-          command: |
-            mysql -u user -ppassword -h 127.0.0.1 testdb < ../database/init.sql  # Point to your init.sql file here
-      # Run tests
+          command: mysql -u ${MYSQL_USER} -p${MYSQL_PASSWORD} -h 127.0.0.1 ${MYSQL_DATABASE} < ../database/init.sql
+      # Install Python dependencies
+      - python/install-packages
+      # Run your tests
       - run:
           name: Run tests
-          command: pytest --junitxml=junit.xml || ((($? == 5)) && echo 'Did not find any tests to run.')
+          command: pytest --junitxml=junit.xml
       - store_test_results:
           path: junit.xml
 
