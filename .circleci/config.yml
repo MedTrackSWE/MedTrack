@@ -51,7 +51,7 @@ jobs:
           name: Initialize MySQL Database with init.sql
           command: |
             export MYSQL_PWD=${MYSQL_PASSWORD}
-            mysql -u ${MYSQL_USER} -h 127.0.0.1 ${MYSQL_DATABASE} < ../database/init.sql
+            mysql -u ${MYSQL_USER} -h 127.0.0.1 circle_test < ../database/init.sql
       # Install Python dependencies
       - python/install-packages
       # Run your tests
