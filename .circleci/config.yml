@@ -29,6 +29,10 @@ jobs:
       - run:
           name: Install MySQL client
           command: sudo apt-get update && sudo apt-get install -y mysql-client
+      # Load environment variables from .env file
+      - run:
+          name: Load environment variables
+          command: export $(cat ../.env | xargs)
       # Install Python dependencies
       - python/install-packages
       # Set up the database using init.sql
