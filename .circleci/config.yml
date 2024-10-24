@@ -25,13 +25,17 @@ jobs:
               echo "Waiting for MySQL..."
               sleep 3
             done
+      # Install MySQL client
+      - run:
+          name: Install MySQL client
+          command: sudo apt-get update && sudo apt-get install -y mysql-client
       # Install Python dependencies
       - python/install-packages
-      # Set up the database (optional SQL commands)
+      # Set up the database using init.sql
       - run:
-          name: Initialize MySQL Database
+          name: Initialize MySQL Database with init.sql
           command: |
-            mysql -u user -ppassword -h 127.0.0.1 testdb < ../database/init.sql 
+            mysql -u user -ppassword -h 127.0.0.1 testdb < ../database/init.sql  # Point to your init.sql file here
       # Run tests
       - run:
           name: Run tests
