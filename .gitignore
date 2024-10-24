@@ -2,6 +2,8 @@ Medtrack.session.sql
 
 .env
 
+__pycache__
+
 backup_mysql.bat
 
 settings.json
