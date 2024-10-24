@@ -45,7 +45,13 @@ jobs:
             mysql -u root -h 127.0.0.1 -e "CREATE USER IF NOT EXISTS '${MYSQL_NEW_USER}'@'%' IDENTIFIED BY '${MYSQL_NEW_PASSWORD}';"
             mysql -u root -h 127.0.0.1 -e "GRANT ALL PRIVILEGES ON circle_test.* TO '${MYSQL_NEW_USER}'@'%';"
             mysql -u root -h 127.0.0.1 -e "FLUSH PRIVILEGES;"
-      
+      - run:
+          name: Test MySQL Connection with Users
+          command: |
+            echo "Testing MySQL circleci connection"
+            mysql -u circleci -h 127.0.0.1 -e "SELECT 1;"
+            echo "Testing MySQL new user connection"
+            mysql -u ${MYSQL_NEW_USER} -p${MYSQL_NEW_PASSWORD} -h 127.0.0.1 -e "SELECT 1;"
       # Run the MySQL initialization script (init.sql)
       - run:
           name: Initialize MySQL Database with init.sql
