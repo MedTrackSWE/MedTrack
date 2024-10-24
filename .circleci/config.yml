@@ -8,6 +8,8 @@ jobs:
       - image: cimg/python:3.13-node  # Main Python/Node.js image
       - image: circleci/mysql:8.0      # MySQL service image
     working_directory: ~/project/backend
+    environment:
+      DB_NAME: circle_test
     steps:
       - checkout:
           path: ~/project
