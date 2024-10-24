@@ -1,5 +1,7 @@
 # MedTrack
 
+Uses CircleCI for CI/CD
+
 Intro to SWE Group Project
 
 npm install -- do it within the MedTrack directory
