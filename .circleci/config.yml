@@ -6,12 +6,7 @@ jobs:
   test-python:
     docker:
       - image: cimg/python:3.13-node  # Main Python/Node.js image
-      - image: circleci/mysql:9.0      # MySQL service image
-        environment:
-          MYSQL_ROOT_PASSWORD: root_password
-          MYSQL_DATABASE: testdb
-          MYSQL_USER: user
-          MYSQL_PASSWORD: password
+      - image: circleci/mysql:8.0      # MySQL service image
     working_directory: ~/project/backend
     steps:
       - checkout:
@@ -46,10 +41,10 @@ jobs:
       - run:
           name: Create MySQL User and Database
           command: |
-            mysql -u root -p${MYSQL_ROOT_PASSWORD} -h 127.0.0.1 -e "CREATE DATABASE IF NOT EXISTS ${MYSQL_DATABASE};"
-            mysql -u root -p${MYSQL_ROOT_PASSWORD} -h 127.0.0.1 -e "CREATE USER IF NOT EXISTS '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';"
-            mysql -u root -p${MYSQL_ROOT_PASSWORD} -h 127.0.0.1 -e "GRANT ALL PRIVILEGES ON ${MYSQL_DATABASE}.* TO '${MYSQL_USER}'@'%';"
-            mysql -u root -p${MYSQL_ROOT_PASSWORD} -h 127.0.0.1 -e "FLUSH PRIVILEGES;"
+            mysql -u root -h 127.0.0.1 -e "CREATE DATABASE IF NOT EXISTS ${MYSQL_DATABASE};"
+            mysql -u root -h 127.0.0.1 -e "CREATE USER IF NOT EXISTS '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';"
+            mysql -u root -h 127.0.0.1 -e "GRANT ALL PRIVILEGES ON ${MYSQL_DATABASE}.* TO '${MYSQL_USER}'@'%';"
+            mysql -u root -h 127.0.0.1 -e "FLUSH PRIVILEGES;"
       
       # Run the MySQL initialization script (init.sql)
       - run:
