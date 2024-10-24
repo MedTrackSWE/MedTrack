@@ -31,7 +31,7 @@ jobs:
       - run:
           name: Initialize MySQL Database
           command: |
-            mysql -u user -ppassword -h 127.0.0.1 testdb < setup.sql  # Replace setup.sql with your DB schema file if necessary
+            mysql -u user -ppassword -h 127.0.0.1 testdb < database/init.sql 
       # Run tests
       - run:
           name: Run tests
