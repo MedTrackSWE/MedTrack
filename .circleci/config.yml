@@ -44,7 +44,6 @@ jobs:
             mysql -u root -h 127.0.0.1 -e "CREATE DATABASE IF NOT EXISTS circle_test;"
             mysql -u root -h 127.0.0.1 -e "CREATE USER IF NOT EXISTS '${MYSQL_NEW_USER}'@'%' IDENTIFIED BY '${MYSQL_NEW_PASSWORD}';"
             mysql -u root -h 127.0.0.1 -e "GRANT ALL PRIVILEGES ON circle_test.* TO '${MYSQL_NEW_USER}'@'%';"
-            mysql -u root -h 127.0.0.1 -e "GRANT ALL PRIVILEGES ON circle_test.* TO 'circleci';"
             mysql -u root -h 127.0.0.1 -e "FLUSH PRIVILEGES;"
       
       # Run the MySQL initialization script (init.sql)
@@ -52,6 +51,16 @@ jobs:
           name: Initialize MySQL Database with init.sql
           command: |
             mysql -u ${MYSQL_NEW_USER} -p${MYSQL_NEW_PASSWORD} -h 127.0.0.1 circle_test < ../database/init.sql
+      
+      # List MySQL Users and Show Permissions
+      - run:
+          name: List MySQL Users and Show Permissions
+          command: |
+            echo "Listing all MySQL users and their permissions:"
+            mysql -u root -h 127.0.0.1 -e "SELECT User, Host FROM mysql.user;"
+            echo "Showing grants for each user:"
+            mysql -u root -h 127.0.0.1 -e "SELECT CONCAT('SHOW GRANTS FOR ''', User, '''@''', Host, ''';') FROM mysql.user;" | while read query; do mysql -u root -h 127.0.0.1 -e "$query"; done
+      
       # Install Python dependencies
       - python/install-packages
       # Run your tests
