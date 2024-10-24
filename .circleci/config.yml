@@ -36,7 +36,7 @@ jobs:
           name: Test MySQL Connection
           command: |
             echo "Testing MySQL root connection"
-            mysql -u root -p${MYSQL_ROOT_PASSWORD} -h 127.0.0.1 -e "SELECT 1;"
+            mysql -u root -h 127.0.0.1 -e "SELECT 1;"
       # Set the MYSQL_PWD environment variable to securely pass the password
       - run:
           name: Create MySQL User and Database
