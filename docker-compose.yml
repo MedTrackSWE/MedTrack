@@ -1,24 +1,37 @@
 version: '3.8'
 
 services:
-  db:
-    image: mysql:latest
-    container_name: medtrack-db
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "3306:3306"
+  backend:
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile
     volumes:
-      - db_data:/var/lib/mysql
-    networks:
-      - medtrack-network
+      - ./backend:/app
+    ports:
+      - "5000:5000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/mydatabase
+    depends_on:
+      - db
 
-volumes:
-  db_data:
+  frontend:
+    build:
+      context: .
+      dockerfile: ./MedTrack/Dockerfile
+    volumes:
+      - ./MedTrack:/app
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
 
-networks:
-  medtrack-network:
+  db:
+    image: postgres:13
+    volumes:
+      - ./database:/docker-entrypoint-initdb.d
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydatabase
+    ports:
+      - "5432:5432"
