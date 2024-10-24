@@ -50,7 +50,7 @@ jobs:
       - run:
           name: Initialize MySQL Database with init.sql
           command: |
-            mysql -u ${MYSQL_NEW_USER} -h 127.0.0.1 circle_test < ../database/init.sql
+            mysql -u ${MYSQL_NEW_USER} -p${MYSQL_NEW_PASSWORD} -h 127.0.0.1 circle_test < ../database/init.sql
       # Install Python dependencies
       - python/install-packages
       # Run your tests
