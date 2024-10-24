@@ -51,18 +51,14 @@ jobs:
           name: Initialize MySQL Database with init.sql
           command: |
             mysql -u ${MYSQL_NEW_USER} -p${MYSQL_NEW_PASSWORD} -h 127.0.0.1 circle_test < ../database/init.sql
-      
-      # List MySQL Users and Show Permissions
-      - run:
-          name: List MySQL Users and Show Permissions
-          command: |
-            echo "Listing all MySQL users and their permissions:"
-            mysql -u root -h 127.0.0.1 -e "SELECT User, Host FROM mysql.user;"
-            echo "Showing grants for each user:"
-            mysql -u root -h 127.0.0.1 -e "SELECT CONCAT('SHOW GRANTS FOR ''', User, '''@''', Host, ''';') FROM mysql.user;" | while read query; do mysql -u root -h 127.0.0.1 -e "$query"; done
-      
       # Install Python dependencies
       - python/install-packages
+      # Directly query to show MySQL users and their permissions
+      - run:
+          name: Show Users and Permissions
+          command: |
+            echo "Showing MySQL Users and Permissions:"
+            mysql -u root -h 127.0.0.1 -e "SELECT user, host, authentication_string, plugin FROM mysql.user;"
       # Run your tests
       - run:
           name: Run tests
