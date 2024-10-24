@@ -54,10 +54,11 @@ const App: React.FC = () => {
           // Navigate to dashboard after successful login
           navigate('/dashboard');
         } else {
-          // After successful signup, switch to login
+          // After successful signup, show success message and switch to login
+          setMessage('Account created successfully! Redirecting to login...');
           setTimeout(() => {
-            resetForm();
             setIsLogin(true);
+            resetForm();
           }, 2000);
         }
       } else {
