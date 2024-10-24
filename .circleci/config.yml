@@ -1,36 +1,45 @@
-# This config was automatically generated from your source code
-# Stacks detected: deps:node:.,deps:python:backend
 version: 2.1
 orbs:
   python: circleci/python@2
+
 jobs:
   test-python:
-    # Install dependencies and run tests
     docker:
       - image: cimg/python:3.13-node
+      - image: circleci/mysql:8.0  # Add MySQL 8.0 service
+        environment:
+          MYSQL_ROOT_PASSWORD: rootpassword  # Set a root password
+          MYSQL_DATABASE: testdb  # Name of the database to be created
+          MYSQL_USER: user
+          MYSQL_PASSWORD: password
     working_directory: ~/project/backend
     steps:
       - checkout:
           path: ~/project
+      # Wait for MySQL to be ready
+      - run:
+          name: Wait for MySQL service
+          command: |
+            for i in `seq 1 10`; do
+              nc -z localhost 3306 && echo Success && break
+              echo "Waiting for MySQL..."
+              sleep 3
+            done
+      # Install Python dependencies
       - python/install-packages
+      # Set up the database (optional SQL commands)
+      - run:
+          name: Initialize MySQL Database
+          command: |
+            mysql -u user -ppassword -h 127.0.0.1 testdb < setup.sql  # Replace setup.sql with your DB schema file if necessary
+      # Run tests
       - run:
           name: Run tests
           command: pytest --junitxml=junit.xml || ((($? == 5)) && echo 'Did not find any tests to run.')
       - store_test_results:
           path: junit.xml
-  deploy:
-    # This is an example deploy job, not actually used by the workflow
-    docker:
-      - image: cimg/base:stable
-    steps:
-      # Replace this with steps to deploy to users
-      - run:
-          name: deploy
-          command: '#e.g. ./deploy.sh'
+
 workflows:
   build-and-test:
     jobs:
       - test-python
-    # - deploy:
-    #     requires:
-    #       - test-python
