@@ -28,7 +28,7 @@ const App: React.FC = () => {
 
     try {
       const endpoint = isLogin ? 'login' : 'signup';
-      const response = await fetch(`http://localhost:5000/api/${endpoint}`, {
+      const response = await fetch(`http://127.0.0.1:5000/api/${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
