@@ -17,6 +17,7 @@ CREATE TABLE Medical_History (
     FOREIGN KEY (user_id) REFERENCES Users(user_id)
 );
 
+-- Conditions table
 CREATE TABLE Conditions (
     condition_id INT AUTO_INCREMENT PRIMARY KEY,
     history_id INT NOT NULL,
@@ -26,31 +27,23 @@ CREATE TABLE Conditions (
     FOREIGN KEY (history_id) REFERENCES Medical_History(history_id)
 );
 
+-- Medications table
 CREATE TABLE Medications (
     medication_id INT AUTO_INCREMENT PRIMARY KEY,
     history_id INT NOT NULL,
     medication_name VARCHAR(255) NOT NULL,
     dosage VARCHAR(100),
     start_date DATE NOT NULL,
-    end_date DATE DEFAULT NULL,  -- NULL means the medication is still being taken
+    end_date DATE DEFAULT NULL,
     FOREIGN KEY (history_id) REFERENCES Medical_History(history_id)
 );
 
-
+-- Hospitals table
 CREATE TABLE Hospitals (
     hospital_id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     address VARCHAR(255) NOT NULL,
     phone_number VARCHAR(50)
-);
-
--- Available time slots table
-CREATE TABLE Timeslots (
-    timeslot_id INT AUTO_INCREMENT PRIMARY KEY,
-    hospital_id INT NOT NULL,
-    timeslot_time TIME NOT NULL,
-    timeslot_date DATE NOT NULL,
-    FOREIGN KEY (hospital_id) REFERENCES Hospitals(hospital_id),
 );
 
 -- Appointments table
@@ -62,5 +55,14 @@ CREATE TABLE Appointments (
     status ENUM('Scheduled', 'Cancelled', 'Completed') DEFAULT 'Scheduled',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES Users(user_id),
+    FOREIGN KEY (hospital_id) REFERENCES Hospitals(hospital_id)
+);
+
+-- Available time slots table
+CREATE TABLE Timeslots (
+    timeslot_id INT AUTO_INCREMENT PRIMARY KEY,
+    hospital_id INT NOT NULL,
+    timeslot_time TIME NOT NULL,
+    timeslot_date DATE NOT NULL,
     FOREIGN KEY (hospital_id) REFERENCES Hospitals(hospital_id)
 );
