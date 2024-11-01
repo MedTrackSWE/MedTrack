@@ -7,18 +7,6 @@ CREATE TABLE Users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- Appointments table
-CREATE TABLE Appointments (
-    appointment_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    appointment_time DATETIME NOT NULL,
-    hospital_id INT NOT NULL,
-    status ENUM('Scheduled', 'Cancelled', 'Completed') DEFAULT 'Scheduled',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES Users(user_id),
-    FOREIGN KEY (hospital_id) REFERENCES Hospitals(hospital_id)
-);
-
 -- Medical history table
 CREATE TABLE Medical_History (
     history_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -63,4 +51,16 @@ CREATE TABLE Timeslots (
     timeslot_time TIME NOT NULL,
     timeslot_date DATE NOT NULL,
     FOREIGN KEY (hospital_id) REFERENCES Hospitals(hospital_id),
+);
+
+-- Appointments table
+CREATE TABLE Appointments (
+    appointment_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    appointment_time DATETIME NOT NULL,
+    hospital_id INT NOT NULL,
+    status ENUM('Scheduled', 'Cancelled', 'Completed') DEFAULT 'Scheduled',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id),
+    FOREIGN KEY (hospital_id) REFERENCES Hospitals(hospital_id)
 );
