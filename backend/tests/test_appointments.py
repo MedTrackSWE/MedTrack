@@ -44,9 +44,13 @@ def client():
     # Insert sample data
     cursor.execute("INSERT INTO Users (user_id, email, password_hash, created_at, updated_at) VALUES (1, 'testuser@example.com', 'hashedpassword', NOW(), NOW())")
     cursor.execute("INSERT INTO Hospitals (hospital_id, name, address, phone_number) VALUES (1, 'Sample Hospital', '123 Health St', '555-1234')")
-    cursor.execute("INSERT INTO Hospitals (hospital_id, name, address, phone_number) VALUES (2, 'Another Hospital', '456 Wellness Ave', '555-5678')")
     cursor.execute("INSERT INTO Timeslots (timeslot_id, hospital_id, timeslot_time, timeslot_date) VALUES (1, 1, '10:00:00', '2024-12-01')")
     cursor.execute("INSERT INTO Timeslots (timeslot_id, hospital_id, timeslot_time, timeslot_date) VALUES (2, 1, '11:00:00', '2024-12-01')")
+
+    # Add a future appointment for the user
+    future_appointment_time = "2024-12-01 10:00:00"  # Adjust date/time as needed for future appointment
+    cursor.execute("INSERT INTO Appointments (user_id, appointment_time, hospital_id, status) VALUES (%s, %s, %s, 'Scheduled')", 
+                   (1, future_appointment_time, 1))
     connection.commit()
 
     yield client  # Provide the client to the test
