@@ -1,4 +1,5 @@
 import sys, os
+from datetime import timedelta
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from database import get_db_connection
@@ -47,7 +48,14 @@ class Appointment:
                 WHERE t.hospital_id = %s AND a.appointment_id IS NULL
             """, (selected_date, user_id, hospital_id))
             
-            return cursor.fetchall()
+            available_times = cursor.fetchall()
+            
+            # Convert timedelta to a string format if present
+            for slot in available_times:
+                if isinstance(slot['timeslot_time'], timedelta):
+                    slot['timeslot_time'] = str(slot['timeslot_time'])  # Converts to 'HH:MM:SS' format
+
+            return available_times
         
         except Exception as e:
             print(f"Error fetching available times: {e}")
