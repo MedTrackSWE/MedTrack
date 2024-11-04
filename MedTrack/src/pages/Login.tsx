@@ -1,9 +1,12 @@
 import React, { useState, FormEvent } from 'react';
-import Button from "./assets/components/Button";
-import Input from "./assets/components/Input";
-import Alert from "./assets/components/Alert";
+import { useNavigate } from 'react-router-dom';
+import Button from "../assets/components/Button";
+import Input from "../assets/components/Input";
+import Alert from "../assets/components/Alert";
+
 
 const App: React.FC = () => {
+  const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState<boolean>(true);
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
@@ -43,11 +46,19 @@ const App: React.FC = () => {
       const data = await response.json();
       if (response.ok) {
         setMessage(data.message);
-        if (!isLogin) {
-          // After successful signup, switch to login
+        if (isLogin) {
+          // Store the token if your API returns one
+          if (data.token) {
+            localStorage.setItem('authToken', data.token);
+          }
+          // Navigate to dashboard after successful login
+          navigate('/dashboard');
+        } else {
+          // After successful signup, show success message and switch to login
+          setMessage('Account created successfully! Redirecting to login...');
           setTimeout(() => {
-            resetForm();
             setIsLogin(true);
+            resetForm();
           }, 2000);
         }
       } else {
