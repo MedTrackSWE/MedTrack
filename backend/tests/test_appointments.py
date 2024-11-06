@@ -1,6 +1,7 @@
 import pytest
 import sys, os
 from mysql.connector import Error
+from werkzeug.security import generate_password_hash
 
 # Set the current directory to the 'backend' root
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -41,14 +42,16 @@ def client():
     # Enable foreign key checks
     cursor.execute("SET FOREIGN_KEY_CHECKS=1")
 
+    password = generate_password_hash('hashed_password')
+
     # Insert sample data
-    cursor.execute("INSERT INTO Users (user_id, email, password_hash, created_at, updated_at) VALUES (1, 'testuser@example.com', 'hashedpassword', NOW(), NOW())")
+    cursor.execute("INSERT INTO Users (user_id, email, password_hash, created_at, updated_at) VALUES (%s, %s, %s, NOW(), NOW())",(1, 'testuser@example.com', password))    
     cursor.execute("INSERT INTO Hospitals (hospital_id, name, address, phone_number) VALUES (1, 'Sample Hospital', '123 Health St', '555-1234')")
     cursor.execute("INSERT INTO Timeslots (timeslot_id, hospital_id, timeslot_time, timeslot_date) VALUES (1, 1, '10:00:00', '2024-12-01')")
     cursor.execute("INSERT INTO Timeslots (timeslot_id, hospital_id, timeslot_time, timeslot_date) VALUES (2, 1, '11:00:00', '2024-12-01')")
 
     # Add a future appointment for the user
-    future_appointment_time = "2024-12-01 10:00:00"  # Adjust date/time as needed for future appointment
+    future_appointment_time = "2024-12-01 10:00:00"
     cursor.execute("INSERT INTO Appointments (user_id, appointment_time, hospital_id, status) VALUES (%s, %s, %s, 'Scheduled')", 
                    (1, future_appointment_time, 1))
     connection.commit()
@@ -56,7 +59,14 @@ def client():
     yield client  # Provide the client to the test
 
     # Restore original data
+    cursor.execute("SET FOREIGN_KEY_CHECKS=0")
     cursor.execute("DELETE FROM Appointments")
+    cursor.execute("DELETE FROM Appointments")
+    cursor.execute("DELETE FROM Users")
+    cursor.execute("DELETE FROM Timeslots")
+    cursor.execute("DELETE FROM Hospitals")
+    connection.commit()
+    cursor.execute("SET FOREIGN_KEY_CHECKS=1")
     for user in backup_users:
         cursor.execute(
             "INSERT INTO Users (user_id, email, password_hash, created_at, updated_at) VALUES (%s, %s, %s, %s, %s)",

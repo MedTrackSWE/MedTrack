@@ -45,7 +45,8 @@ def get_available_times():
     hospital_id = request.args.get('hospital_id')
     
     available_times = Appointment.get_available_times(selected_date, user_id, hospital_id)  # Using Appointment class method
-    return jsonify(available_times), 200 if available_times else jsonify({"error": "No available times found"}), 500
+    return jsonify(available_times), (200 if available_times else 500)
+
 
 @appointments_bp.route('/book', methods=['POST'])
 def book_appointment():

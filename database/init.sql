@@ -63,6 +63,5 @@ CREATE TABLE Timeslots (
     timeslot_id INT AUTO_INCREMENT PRIMARY KEY,
     hospital_id INT NOT NULL,
     timeslot_time TIME NOT NULL,
-    timeslot_date DATE NOT NULL,
     FOREIGN KEY (hospital_id) REFERENCES Hospitals(hospital_id)
 );
