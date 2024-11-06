@@ -1,6 +1,6 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom';
-
+import Button from '../assets/components/Button'; // Adjust the import path as needed
 
 type NavigationPage = 'appointments' | 'history' | 'faq'
 
@@ -21,8 +21,8 @@ const Dashboard: React.FC = () => {
       {/* Sign Out Button */}
       <div className="container position-relative">
         <div className="position-absolute top-0 end-0">
-          <button 
-            className="btn btn-outline-danger"
+          <Button 
+            color="outline-danger"
             onClick={handleSignOut}
           >
             <svg
@@ -41,7 +41,7 @@ const Dashboard: React.FC = () => {
               />
             </svg>
             Sign Out
-          </button>
+          </Button>
         </div>
 
         {/* Header Section */}
@@ -87,12 +87,12 @@ const Dashboard: React.FC = () => {
                 <p className="text-muted mb-4">
                   Schedule and manage your appointments
                 </p>
-                <button
-                  className="btn btn-primary w-100"
+                <Button
+                  color="primary"
                   onClick={() => handleNavigation('appointments')}
                 >
                   Book Appointment
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -122,12 +122,12 @@ const Dashboard: React.FC = () => {
                 <p className="text-muted mb-4">
                   View your past appointments and records
                 </p>
-                <button
-                  className="btn btn-outline-secondary w-100"
+                <Button
+                  color="outline-secondary"
                   onClick={() => handleNavigation('history')}
                 >
                   View History
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -155,12 +155,12 @@ const Dashboard: React.FC = () => {
                 </div>
                 <h2 className="h4 mb-2">FAQ</h2>
                 <p className="text-muted mb-4">Find answers to common questions</p>
-                <button
-                  className="btn btn-outline-secondary w-100"
+                <Button
+                  color="outline-secondary"
                   onClick={() => handleNavigation('faq')}
                 >
                   View FAQ
-                </button>
+                </Button>
               </div>
             </div>
           </div>
