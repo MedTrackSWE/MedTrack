@@ -43,9 +43,12 @@ def client():
     cursor.execute("SET FOREIGN_KEY_CHECKS=1")
 
     password = generate_password_hash('hashed_password')
+    password2 = generate_password_hash('hashed_password2')
+
 
     # Insert sample data
-    cursor.execute("INSERT INTO Users (user_id, email, password_hash, created_at, updated_at) VALUES (%s, %s, %s, NOW(), NOW())",(1, 'testuser@example.com', password))    
+    cursor.execute("INSERT INTO Users (user_id, email, password_hash, created_at, updated_at) VALUES (%s, %s, %s, NOW(), NOW())",(1, 'testuser@example.com', password))
+    cursor.execute("INSERT INTO Users (user_id, email, password_hash, created_at, updated_at) VALUES (%s, %s, %s, NOW(), NOW())",(2, 'testuser2@example.com', password2))        
     cursor.execute("INSERT INTO Hospitals (hospital_id, name, address, phone_number) VALUES (1, 'Sample Hospital', '123 Health St', '555-1234')")
     cursor.execute("INSERT INTO Timeslots (timeslot_id, hospital_id, timeslot_time, timeslot_date) VALUES (1, 1, '10:00:00', '2024-12-01')")
     cursor.execute("INSERT INTO Timeslots (timeslot_id, hospital_id, timeslot_time, timeslot_date) VALUES (2, 1, '11:00:00', '2024-12-01')")
@@ -169,6 +172,8 @@ def test_book_already_taken_slot(client):
     appointment_time = "2024-12-01 10:00:00"
     hospital_id = 1
 
+    user_id2 = 2
+
     # Book the first appointment
     client.post('/api/appointments/book', json={
         'user_id': user_id,
@@ -179,6 +184,15 @@ def test_book_already_taken_slot(client):
     # Attempt to book the same slot again
     response = client.post('/api/appointments/book', json={
         'user_id': user_id,
+        'appointment_time': appointment_time,
+        'hospital_id': hospital_id
+    })
+    assert response.status_code == 500
+    assert b"Failed to book appointment" in response.data
+
+    # Attempt to book the same slot again with a different user
+    response = client.post('/api/appointments/book', json={
+        'user_id': user_id2,
         'appointment_time': appointment_time,
         'hospital_id': hospital_id
     })

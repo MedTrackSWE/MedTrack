@@ -67,11 +67,22 @@ class Appointment:
 
     @staticmethod
     def book_appointment(user_id, appointment_time, hospital_id):
-        """Book an appointment for a specific date and time."""
+        """Book an appointment for a specific date and time, preventing double booking."""
         connection = get_db_connection()
         cursor = connection.cursor()
         
         try:
+            # Check for an existing appointment at the same time and hospital
+            cursor.execute("""
+                SELECT appointment_id FROM Appointments
+                WHERE appointment_time = %s AND hospital_id = %s AND status = 'Scheduled'
+            """, (appointment_time, hospital_id))
+            
+            if cursor.fetchone():  # If an appointment exists, prevent double booking
+                print("Appointment already exists at this time and hospital.")
+                return False
+            
+            # Proceed to book the appointment
             cursor.execute("""
                 INSERT INTO Appointments (user_id, appointment_time, hospital_id, status)
                 VALUES (%s, %s, %s, 'Scheduled')
@@ -87,3 +98,4 @@ class Appointment:
         finally:
             cursor.close()
             connection.close()
+
