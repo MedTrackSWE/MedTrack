@@ -126,7 +126,7 @@ def test_available_times(client):
 
 def test_book_appointment(client):
     user_id = 1
-    appointment_time = "2024-12-01 10:00:00"
+    appointment_time = "2024-12-01 13:00:00"
     hospital_id = 1
 
     response = client.post('/api/appointments/book', json={

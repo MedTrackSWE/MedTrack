@@ -39,14 +39,16 @@ class Appointment:
         #FIXME: Need to add date validation too
         try:
             cursor.execute("""
-                SELECT t.timeslot_time
-                FROM Timeslots t
-                LEFT JOIN Appointments a ON t.hospital_id = a.hospital_id 
-                    AND t.timeslot_time = TIME(a.appointment_time) 
-                    AND DATE(a.appointment_time) = %s
-                    AND a.user_id = %s
-                WHERE t.hospital_id = %s AND a.appointment_id IS NULL
-            """, (selected_date, user_id, hospital_id))
+            SELECT t.timeslot_time
+            FROM Timeslots t
+            LEFT JOIN Appointments a ON t.hospital_id = a.hospital_id 
+                AND t.timeslot_time = TIME(a.appointment_time) 
+                AND DATE(a.appointment_time) = %s
+                AND a.user_id = %s
+            WHERE t.hospital_id = %s 
+                AND t.timeslot_date = %s  -- Explicitly filter by timeslot_date
+                AND a.appointment_id IS NULL
+        """, (selected_date, user_id, hospital_id, selected_date))
             
             available_times = cursor.fetchall()
             
