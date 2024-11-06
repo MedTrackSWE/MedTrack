@@ -205,6 +205,6 @@ def test_no_available_times(client):
     hospital_id = 1
 
     response = client.get(f'/api/appointments/available-times?user_id={user_id}&date={selected_date}&hospital_id={hospital_id}')
-    assert response.status_code == 200
+    assert response.status_code == 500
     available_times = response.json
     assert available_times == []

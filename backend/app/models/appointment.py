@@ -36,7 +36,7 @@ class Appointment:
         """Retrieve available times for a given day for booking appointments."""
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
-        
+        #FIXME: Need to add date validation too
         try:
             cursor.execute("""
                 SELECT t.timeslot_time
