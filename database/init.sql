@@ -14,6 +14,7 @@ CREATE TABLE Appointments (
     appointment_time DATETIME NOT NULL,
     hospital_id INT NOT NULL,
     status ENUM('Scheduled', 'Cancelled', 'Completed') DEFAULT 'Scheduled',
+    appointment_note TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES Users(user_id)
 );
