@@ -13,7 +13,6 @@ def get_appointments():
     return jsonify(appointments), 200
 
 @medical_history_bp.route('/api/medical_history/conditions', methods=['GET'])
-@jwt_required()
 def get_conditions():
     user_id = get_jwt_identity()
     medical_record = MedicalRecord(user_id)
