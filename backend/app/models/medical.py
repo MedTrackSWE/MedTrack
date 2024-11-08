@@ -4,6 +4,35 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from database import get_db_connection
 
 class MedicalRecord:
+
+    @staticmethod
+    def get_prior_appointments(user_id):
+        """Fetches all prior completed appointments with notes for the user."""
+        db = get_db_connection()
+        cursor = db.cursor()
+        query = """
+            SELECT appointment_date, notes
+            FROM appointments
+            WHERE user_id = %s AND status = 'completed'
+            ORDER BY appointment_date DESC
+        """
+        cursor.execute(query, (user_id,))
+        return cursor.fetchall()
+
+    @staticmethod
+    def get_prior_conditions(user_id):
+        """Fetches prior conditions or surgeries for the user."""
+        db = get_db_connection()
+        cursor = db.cursor()
+        query = """
+            SELECT condition_name, condition_date
+            FROM medical_conditions
+            WHERE user_id = %s
+            ORDER BY condition_date DESC
+        """
+        cursor.execute(query, (user_id,))
+        return cursor.fetchall()
+
     @staticmethod
     def get_medical_history(user_id):
         """Fetches medical history records for a specific user."""
@@ -40,6 +69,7 @@ class MedicalRecord:
         finally:
             cursor.close()
             connection.close()
+
 
     @staticmethod
     def delete_medical_record(record_id):
