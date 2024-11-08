@@ -4,7 +4,11 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from database import get_db_connection
 
 class MedicalRecord:
-
+    @staticmethod
+    def format_date(date):
+        """Formats a date into a readable string."""
+        return date.strftime('%Y-%m-%d')
+    
     @staticmethod
     def get_prior_appointments(user_id):
         """Fetches all prior completed appointments with notes for the user."""
