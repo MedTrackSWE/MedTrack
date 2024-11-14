@@ -1,5 +1,3 @@
-# views.py
-
 from flask import Blueprint, jsonify, request
 from models.medical import MedicalRecord
 
