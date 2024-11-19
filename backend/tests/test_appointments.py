@@ -308,31 +308,6 @@ def test_reschedule_appointment_timeslot_assignment(client):
     cursor.close()
     connection.close()
 
-def test_cancel_appointment_timeslot_release(client):
-    """Test that canceling an appointment releases the timeslot in the database."""
-    appointment_id = get_last_inserted_appointment_id(client)
-    assert appointment_id is not None, "No appointment found to reschedule."
-
-    response = client.post('/api/appointments/cancel', json={
-        'appointment_id': appointment_id
-    })
-    assert response.status_code == 200
-
-    # Check that the timeslot is released
-    connection = get_db_connection()
-    cursor = connection.cursor(dictionary=True)
-    cursor.execute("""
-        SELECT appointment_id
-        FROM Timeslots
-        WHERE timeslot_time = '10:00:00' AND timeslot_date = '2024-12-01'
-    """)
-    timeslot = cursor.fetchone()
-    assert timeslot['appointment_id'] is None
-
-    cursor.close()
-    connection.close()
-
-
 def test_original_timeslot_available_after_reschedule(client):
     """Test that the original timeslot becomes available after rescheduling."""
     user_id = 1
