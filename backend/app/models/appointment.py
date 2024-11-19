@@ -4,6 +4,29 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from database import get_db_connection
 class Appointment:
+    
+    @staticmethod
+    def get_appointment_id(user_id):
+        """Retrieve the appointment_id for a user's upcoming appointment."""
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
+        try:
+            cursor.execute("""
+                SELECT appointment_id
+                FROM Appointments
+                WHERE user_id = %s AND status = 'Scheduled' AND appointment_time > NOW()
+                ORDER BY appointment_time ASC
+                LIMIT 1
+            """, (user_id,))
+            result = cursor.fetchone()
+            return result['appointment_id'] if result else None
+        except Exception as e:
+            print(f"Error fetching appointment ID: {e}")
+            return None
+        finally:
+            cursor.close()
+            connection.close()
+
 
     @staticmethod
     def get_upcoming_appointment(user_id):
@@ -101,3 +124,104 @@ class Appointment:
             cursor.close()
             connection.close()
 
+    @staticmethod
+    def reschedule_appointment(appointment_id, new_time):
+        """Reschedule an appointment to a new time and update the Timeslots table."""
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        try:
+            # Fetch current timeslot details
+            cursor.execute("""
+                SELECT appointment_time, hospital_id
+                FROM Appointments
+                WHERE appointment_id = %s
+            """, (appointment_id,))
+            current_appointment = cursor.fetchone()
+
+            if not current_appointment:
+                print(f"Appointment ID {appointment_id} not found.")
+                return False
+
+            old_time = current_appointment['appointment_time']
+            hospital_id = current_appointment['hospital_id']
+
+            # Release the old timeslot
+            cursor.execute("""
+                UPDATE Timeslots
+                SET appointment_id = NULL
+                WHERE hospital_id = %s AND timeslot_time = TIME(%s) AND timeslot_date = DATE(%s)
+            """, (hospital_id, old_time, old_time))
+
+            # Assign the new timeslot to the appointment
+            cursor.execute("""
+                UPDATE Timeslots
+                SET appointment_id = %s
+                WHERE hospital_id = %s AND timeslot_time = TIME(%s) AND timeslot_date = DATE(%s)
+            """, (appointment_id, hospital_id, new_time, new_time))
+            if cursor.rowcount == 0:
+                print(f"No available timeslot found for hospital {hospital_id} at {new_time}.")
+                return False
+
+            # Update the appointment time
+            cursor.execute("""
+                UPDATE Appointments
+                SET appointment_time = %s, status = 'Scheduled'
+                WHERE appointment_id = %s AND status = 'Scheduled'
+            """, (new_time, appointment_id))
+            if cursor.rowcount > 0:
+                connection.commit()
+                return True
+
+            return False
+        except Exception as e:
+            print(f"Error rescheduling appointment: {e}")
+            return False
+        finally:
+            cursor.close()
+            connection.close()
+
+    @staticmethod
+    def cancel_appointment(appointment_id):
+        """Cancel an appointment and release the assigned timeslot."""
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        try:
+            # Fetch appointment details
+            cursor.execute("""
+                SELECT appointment_time, hospital_id
+                FROM Appointments
+                WHERE appointment_id = %s
+            """, (appointment_id,))
+            appointment = cursor.fetchone()
+
+            if not appointment:
+                print(f"Appointment ID {appointment_id} not found.")
+                return False
+
+            appointment_time = appointment['appointment_time']
+            hospital_id = appointment['hospital_id']
+
+            # Release the assigned timeslot
+            cursor.execute("""
+                UPDATE Timeslots
+                SET appointment_id = NULL
+                WHERE hospital_id = %s AND timeslot_time = TIME(%s) AND timeslot_date = DATE(%s)
+            """, (hospital_id, appointment_time, appointment_time))
+
+            # Cancel the appointment
+            cursor.execute("""
+                UPDATE Appointments
+                SET status = 'Cancelled'
+                WHERE appointment_id = %s AND status = 'Scheduled'
+            """, (appointment_id,))
+            if cursor.rowcount > 0:
+                connection.commit()
+                return True
+
+            return False
+        except Exception as e:
+            print(f"Error cancelling appointment: {e}")
+            return False
+        finally:
+            cursor.close()
+            connection.close()

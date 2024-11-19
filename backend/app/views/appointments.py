@@ -30,7 +30,7 @@ def get_hospitals():
 def get_upcoming_appointment():
     """Retrieve the next upcoming appointment for the logged-in user."""
     user_id = request.args.get('user_id')
-    appointment = Appointment.get_upcoming_appointment(user_id)  # Using Appointment class method
+    appointment = Appointment.get_upcoming_appointment(user_id)  
     
     if appointment:
         return jsonify(appointment), 200
@@ -44,7 +44,7 @@ def get_available_times():
     selected_date = request.args.get('date')
     hospital_id = request.args.get('hospital_id')
     
-    available_times = Appointment.get_available_times(selected_date, user_id, hospital_id)  # Using Appointment class method
+    available_times = Appointment.get_available_times(selected_date, user_id, hospital_id)  
     return jsonify(available_times), (200 if available_times else 500)
 
 
@@ -56,9 +56,55 @@ def book_appointment():
     appointment_time = data.get('appointment_time')  # Expected format: YYYY-MM-DD HH:MM:SS
     hospital_id = data.get('hospital_id')
     
-    success = Appointment.book_appointment(user_id, appointment_time, hospital_id)  # Using Appointment class method
+    success = Appointment.book_appointment(user_id, appointment_time, hospital_id)  
     
     if success:
         return jsonify({"message": "Appointment successfully booked"}), 201
     else:
         return jsonify({"error": "Failed to book appointment"}), 500
+
+@appointments_bp.route('/reschedule', methods=['POST'])
+def reschedule_appointment():
+    """Reschedule an appointment to a new time."""
+    data = request.json
+    appointment_id = data.get('appointment_id')
+    new_time = data.get('new_time')  # Expected format: YYYY-MM-DD HH:MM:SS
+
+    success = Appointment.reschedule_appointment(appointment_id, new_time)
+    if success:
+        return jsonify({"message": "Appointment successfully rescheduled"}), 200
+    else:
+        return jsonify({"error": "Failed to reschedule appointment"}), 500
+
+@appointments_bp.route('/cancel', methods=['POST'])
+def cancel_appointment():
+    """Cancel an appointment."""
+    data = request.json
+    appointment_id = data.get('appointment_id')
+
+    success = Appointment.cancel_appointment(appointment_id)
+    if success:
+        return jsonify({"message": "Appointment successfully cancelled"}), 200
+    else:
+        return jsonify({"error": "Failed to cancel appointment"}), 500
+
+@appointments_bp.route('/get-appointment-id', methods=['GET'])
+def get_appointment_id():
+    """Retrieve the appointment ID based on user, date, time, and hospital."""
+    try:
+        user_id = request.args.get('user_id')
+        appointment_time = request.args.get('appointment_time')  # Expected format: YYYY-MM-DD HH:MM:SS
+        hospital_id = request.args.get('hospital_id')
+
+        if not user_id or not appointment_time or not hospital_id:
+            return jsonify({"error": "Missing required parameters"}), 400
+
+        appointment_id = Appointment.get_appointment_id(user_id, appointment_time, hospital_id)
+        if appointment_id:
+            return jsonify({"appointment_id": appointment_id}), 200
+        else:
+            return jsonify({"error": "Appointment not found"}), 404
+    except Exception as e:
+        print(f"Error in get-appointment-id route: {e}")
+        return jsonify({"error": "Internal server error"}), 500
+

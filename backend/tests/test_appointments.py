@@ -95,6 +95,19 @@ def client():
     cursor.close()
     connection.close()
 
+def get_last_inserted_appointment_id(client):
+    """Fetch the most recently inserted appointment ID."""
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+    try:
+        cursor.execute("SELECT MAX(appointment_id) AS last_id FROM Appointments")
+        result = cursor.fetchone()
+        return result['last_id'] if result else None
+    finally:
+        cursor.close()
+        connection.close()
+
+
 def test_select_hospital(client):
     response = client.get('/api/appointments/hospitals')
     assert response.status_code == 200
@@ -208,3 +221,172 @@ def test_no_available_times(client):
     assert response.status_code == 500
     available_times = response.json
     assert available_times == []
+
+def test_reschedule_appointment_success(client):
+    """Test successful rescheduling of an appointment."""
+    new_time = "2024-12-01 11:00:00"
+    appointment_id = get_last_inserted_appointment_id(client)
+    assert appointment_id is not None, "No appointment found to reschedule."
+
+    response = client.post('/api/appointments/reschedule', json={
+        'appointment_id': appointment_id,
+        'new_time': new_time
+    })
+    assert response.status_code == 200
+    assert response.json.get("message") == "Appointment successfully rescheduled"
+    
+def test_reschedule_appointment_timeslot_assignment(client):
+    """Test that rescheduling updates the timeslot assignment in the database."""
+    appointment_id = get_last_inserted_appointment_id(client)
+    new_time = "2024-12-01 11:00:00"
+    response = client.post('/api/appointments/reschedule', json={
+        'appointment_id': appointment_id,
+        'new_time': new_time
+    })
+    assert response.status_code == 200
+
+    # Check that the new timeslot is assigned to the appointment
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT appointment_id
+        FROM Timeslots
+        WHERE timeslot_time = TIME(%s) AND timeslot_date = DATE(%s)
+    """, (new_time, new_time))
+    timeslot = cursor.fetchone()
+    assert timeslot['appointment_id'] == 1
+
+    # Check that the old timeslot is freed
+    cursor.execute("""
+        SELECT appointment_id
+        FROM Timeslots
+        WHERE timeslot_time = '10:00:00' AND timeslot_date = '2024-12-01'
+    """)
+    timeslot = cursor.fetchone()
+    assert timeslot['appointment_id'] is None
+
+    cursor.close()
+    connection.close()
+
+def test_cancel_appointment_timeslot_release(client):
+    """Test that canceling an appointment releases the timeslot in the database."""
+    appointment_id = get_last_inserted_appointment_id(client)
+    response = client.post('/api/appointments/cancel', json={
+        'appointment_id': appointment_id
+    })
+    assert response.status_code == 200
+
+    # Check that the timeslot is released
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT appointment_id
+        FROM Timeslots
+        WHERE timeslot_time = '10:00:00' AND timeslot_date = '2024-12-01'
+    """)
+    timeslot = cursor.fetchone()
+    assert timeslot['appointment_id'] is None
+
+    cursor.close()
+    connection.close()
+
+
+def test_original_timeslot_available_after_reschedule(client):
+    """Test that the original timeslot becomes available after rescheduling."""
+    user_id = 1
+    original_time = "10:00:00"
+    hospital_id = 1
+    appointment_id = get_last_inserted_appointment_id(client)
+    assert appointment_id is not None, "No appointment found to reschedule."
+
+    # Reschedule to a new time
+    client.post('/api/appointments/reschedule', json={
+        'appointment_id': appointment_id,
+        'new_time': "2024-12-01 11:00:00"
+    })
+
+    # Check availability of original timeslot
+    response = client.get(
+        f'/api/appointments/available-times?user_id={user_id}&date=2024-12-01&hospital_id={hospital_id}'
+    )
+    assert response.status_code == 200
+    available_times = [slot['timeslot_time'] for slot in response.json]
+    assert original_time in available_times
+
+def test_no_double_booking_on_rescheduled_timeslot(client):
+    """Test that the rescheduled timeslot cannot be double-booked."""
+    user_id = 2  # Another user trying to book the rescheduled slot
+    new_time = "2024-12-01 11:00:00"
+    hospital_id = 1
+    appointment_id = get_last_inserted_appointment_id(client)
+    assert appointment_id is not None, "No appointment found to reschedule."
+
+    # Reschedule to a new time
+    client.post('/api/appointments/reschedule', json={
+        'appointment_id': appointment_id,
+        'new_time': new_time
+    })
+
+    # Attempt to book the rescheduled timeslot
+    response = client.post('/api/appointments/book', json={
+        'user_id': user_id,
+        'appointment_time': new_time,
+        'hospital_id': hospital_id
+    })
+    assert response.status_code == 500
+    assert b"Failed to book appointment" in response.data
+
+
+def test_cancel_appointment_success(client):
+    """Test successful cancellation of an appointment."""
+    appointment_id = get_last_inserted_appointment_id(client)
+    assert appointment_id is not None, "No appointment found to cancel."
+
+    response = client.post('/api/appointments/cancel', json={
+        'appointment_id': appointment_id
+    })
+    assert response.status_code == 200
+    assert response.json.get("message") == "Appointment successfully cancelled"
+
+def test_canceled_timeslot_becomes_available(client):
+    """Test that the canceled timeslot becomes available for booking."""
+    user_id = 1
+    appointment_id = get_last_inserted_appointment_id(client)
+    assert appointment_id is not None, "No appointment found to cancel."
+
+    # Cancel the appointment
+    client.post('/api/appointments/cancel', json={
+        'appointment_id': appointment_id
+    })
+
+    # Check that the timeslot is released
+    response = client.get(
+        f'/api/appointments/available-times?user_id={user_id}&date=2024-12-01&hospital_id=1'
+    )
+    assert response.status_code == 200
+    available_times = [slot['timeslot_time'] for slot in response.json]
+    assert "10:00:00" in available_times
+
+def test_database_update_after_reschedule_and_cancel(client):
+    """Test that the database is updated correctly after rescheduling and cancellation."""
+    user_id = 1
+    appointment_id = get_last_inserted_appointment_id(client)
+    # Check rescheduling database integrity
+    new_time = "2024-12-01 11:00:00"
+    client.post('/api/appointments/reschedule', json={
+        'appointment_id': appointment_id,
+        'new_time': new_time
+    })
+    rescheduled_response = client.get(f'/api/appointments/upcoming?user_id={user_id}')
+    assert rescheduled_response.status_code == 200
+    rescheduled_appointment = rescheduled_response.json
+    assert rescheduled_appointment.get("appointment_time") == "2024-12-01 11:00:00"
+
+    # Check cancellation database integrity
+    client.post('/api/appointments/cancel', json={
+        'appointment_id': appointment_id
+    })
+    canceled_response = client.get(f'/api/appointments/upcoming?user_id={user_id}')
+    assert canceled_response.status_code == 200
+    assert canceled_response.json.get("message") == "No upcoming appointments"
+
