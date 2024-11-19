@@ -66,27 +66,43 @@ def book_appointment():
 @appointments_bp.route('/reschedule', methods=['POST'])
 def reschedule_appointment():
     """Reschedule an appointment to a new time."""
-    data = request.json
-    appointment_id = data.get('appointment_id')
-    new_time = data.get('new_time')  # Expected format: YYYY-MM-DD HH:MM:SS
+    try:
+        data = request.json
+        appointment_id = data.get('appointment_id')
+        new_time = data.get('new_time')
 
-    success = Appointment.reschedule_appointment(appointment_id, new_time)
-    if success:
-        return jsonify({"message": "Appointment successfully rescheduled"}), 200
-    else:
-        return jsonify({"error": "Failed to reschedule appointment"}), 500
+        if not appointment_id or not new_time:
+            return jsonify({"error": "Missing required parameters"}), 400
+
+        success = Appointment.reschedule_appointment(appointment_id, new_time)
+        if success:
+            return jsonify({"message": "Appointment successfully rescheduled"}), 200
+        else:
+            return jsonify({"error": "Failed to reschedule appointment"}), 500
+    except Exception as e:
+        print(f"Error in reschedule route: {e}")
+        return jsonify({"error": "Internal server error"}), 500
+
 
 @appointments_bp.route('/cancel', methods=['POST'])
 def cancel_appointment():
     """Cancel an appointment."""
-    data = request.json
-    appointment_id = data.get('appointment_id')
+    try:
+        data = request.json
+        appointment_id = data.get('appointment_id')
 
-    success = Appointment.cancel_appointment(appointment_id)
-    if success:
-        return jsonify({"message": "Appointment successfully cancelled"}), 200
-    else:
-        return jsonify({"error": "Failed to cancel appointment"}), 500
+        if not appointment_id:
+            return jsonify({"error": "Missing required parameters"}), 400
+
+        success = Appointment.cancel_appointment(appointment_id)
+        if success:
+            return jsonify({"message": "Appointment successfully cancelled"}), 200
+        else:
+            return jsonify({"error": "Failed to cancel appointment"}), 500
+    except Exception as e:
+        print(f"Error in cancel route: {e}")
+        return jsonify({"error": "Internal server error"}), 500
+
 
 @appointments_bp.route('/get-appointment-id', methods=['GET'])
 def get_appointment_id():

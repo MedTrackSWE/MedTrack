@@ -107,6 +107,22 @@ def get_last_inserted_appointment_id(client):
         cursor.close()
         connection.close()
 
+def is_time_slot_available(client, hospital_id, date, time):
+    """Check if a specific time slot is available (no scheduled appointment)."""
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+    try:
+        cursor.execute("""
+            SELECT COUNT(*) AS count
+            FROM Appointments
+            WHERE hospital_id = %s AND appointment_time = %s AND status = 'Scheduled'
+        """, (hospital_id, f"{date} {time}"))
+        result = cursor.fetchone()
+        return result['count'] == 0
+    finally:
+        cursor.close()
+        connection.close()
+
 
 def test_select_hospital(client):
     response = client.get('/api/appointments/hospitals')
@@ -228,42 +244,66 @@ def test_reschedule_appointment_success(client):
     appointment_id = get_last_inserted_appointment_id(client)
     assert appointment_id is not None, "No appointment found to reschedule."
 
+    # Verify new time slot is available
+    hospital_id = 1
+    assert is_time_slot_available(client, hospital_id, "2024-12-01", "11:00:00"), "Time slot is not available."
+
     response = client.post('/api/appointments/reschedule', json={
         'appointment_id': appointment_id,
         'new_time': new_time
     })
     assert response.status_code == 200
     assert response.json.get("message") == "Appointment successfully rescheduled"
+
     
 def test_reschedule_appointment_timeslot_assignment(client):
-    """Test that rescheduling updates the timeslot assignment in the database."""
+    """Test that rescheduling updates the appointment time without creating double-booking."""
     appointment_id = get_last_inserted_appointment_id(client)
+    assert appointment_id is not None, "No appointment found to reschedule."
+
+    original_time = "2024-12-01 10:00:00"
     new_time = "2024-12-01 11:00:00"
+    hospital_id = 1
+
+    # Verify original time slot has the scheduled appointment
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT COUNT(*) AS count
+        FROM Appointments
+        WHERE appointment_time = %s AND hospital_id = %s AND status = 'Scheduled'
+    """, (original_time, hospital_id))
+    original_slot = cursor.fetchone()
+    assert original_slot['count'] == 1, "Original time slot does not have the scheduled appointment."
+
+    # Verify new time slot is available
+    assert is_time_slot_available(client, hospital_id, "2024-12-01", "11:00:00"), "New time slot is not available."
+
+    # Reschedule the appointment
     response = client.post('/api/appointments/reschedule', json={
         'appointment_id': appointment_id,
         'new_time': new_time
     })
     assert response.status_code == 200
+    assert response.json.get("message") == "Appointment successfully rescheduled"
 
-    # Check that the new timeslot is assigned to the appointment
-    connection = get_db_connection()
-    cursor = connection.cursor(dictionary=True)
+    # Verify original time slot is now free
     cursor.execute("""
-        SELECT appointment_id
-        FROM Timeslots
-        WHERE timeslot_time = TIME(%s) AND timeslot_date = DATE(%s)
-    """, (new_time, new_time))
-    timeslot = cursor.fetchone()
-    assert timeslot['appointment_id'] == 1
+        SELECT COUNT(*) AS count
+        FROM Appointments
+        WHERE appointment_time = %s AND hospital_id = %s AND status = 'Scheduled'
+    """, (original_time, hospital_id))
+    original_slot_after = cursor.fetchone()
+    assert original_slot_after['count'] == 0, "Original time slot is still occupied after rescheduling."
 
-    # Check that the old timeslot is freed
+    # Verify new time slot is now occupied
     cursor.execute("""
-        SELECT appointment_id
-        FROM Timeslots
-        WHERE timeslot_time = '10:00:00' AND timeslot_date = '2024-12-01'
-    """)
-    timeslot = cursor.fetchone()
-    assert timeslot['appointment_id'] is None
+        SELECT COUNT(*) AS count
+        FROM Appointments
+        WHERE appointment_time = %s AND hospital_id = %s AND status = 'Scheduled'
+    """, (new_time, hospital_id))
+    new_slot = cursor.fetchone()
+    assert new_slot['count'] == 1, "New time slot is not occupied after rescheduling."
 
     cursor.close()
     connection.close()
@@ -271,6 +311,8 @@ def test_reschedule_appointment_timeslot_assignment(client):
 def test_cancel_appointment_timeslot_release(client):
     """Test that canceling an appointment releases the timeslot in the database."""
     appointment_id = get_last_inserted_appointment_id(client)
+    assert appointment_id is not None, "No appointment found to reschedule."
+
     response = client.post('/api/appointments/cancel', json={
         'appointment_id': appointment_id
     })
@@ -371,6 +413,8 @@ def test_database_update_after_reschedule_and_cancel(client):
     """Test that the database is updated correctly after rescheduling and cancellation."""
     user_id = 1
     appointment_id = get_last_inserted_appointment_id(client)
+    assert appointment_id is not None, "No appointment found to reschedule."
+
     # Check rescheduling database integrity
     new_time = "2024-12-01 11:00:00"
     client.post('/api/appointments/reschedule', json={
