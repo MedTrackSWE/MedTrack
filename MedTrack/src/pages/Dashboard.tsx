@@ -124,7 +124,8 @@ const Dashboard: React.FC = () => {
                 </p>
                 <Button
                   color="outline-secondary"
-                  onClick={() => handleNavigation('history')}
+                  onClick={() => navigate('/popup')}
+                  //onClick={() => handleNavigation('history')}
                 >
                   View History
                 </Button>
