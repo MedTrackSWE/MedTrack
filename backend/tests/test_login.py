@@ -40,6 +40,12 @@ def client():
 
     yield client  # Provide the client to the test
 
+    cursor.execute("SET FOREIGN_KEY_CHECKS=0")
+    cursor.execute("DELETE FROM Appointments")
+    cursor.execute("DELETE FROM Users")
+    connection.commit()
+
+    cursor.execute("SET FOREIGN_KEY_CHECKS=1")
     # Restore original data in Users table
     for user in backup_users:
         cursor.execute(
