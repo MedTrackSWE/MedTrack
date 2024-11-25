@@ -286,24 +286,25 @@ def test_reschedule_appointment_timeslot_assignment(client):
     })
     assert response.status_code == 200
     assert response.json.get("message") == "Appointment successfully rescheduled"
-
+    connection.commit()
+    
     # Verify original time slot is now free
     cursor.execute("""
-        SELECT COUNT(*) AS count
+        SELECT COUNT(*) AS count_old
         FROM Appointments
         WHERE appointment_time = %s AND hospital_id = %s AND status = 'Scheduled'
     """, (original_time, hospital_id))
     original_slot_after = cursor.fetchone()
-    assert original_slot_after['count'] == 0, "Original time slot is still occupied after rescheduling."
+    assert original_slot_after['count_old'] == 0, "Original time slot is still occupied after rescheduling."
 
     # Verify new time slot is now occupied
     cursor.execute("""
-        SELECT COUNT(*) AS count
+        SELECT COUNT(*) AS count_new_slot
         FROM Appointments
         WHERE appointment_time = %s AND hospital_id = %s AND status = 'Scheduled'
     """, (new_time, hospital_id))
     new_slot = cursor.fetchone()
-    assert new_slot['count'] == 1, "New time slot is not occupied after rescheduling."
+    assert new_slot['count_new_slot'] == 1, "New time slot is not occupied after rescheduling."
 
     cursor.close()
     connection.close()

@@ -33,10 +33,13 @@ def get_upcoming_appointment():
     appointment = Appointment.get_upcoming_appointment(user_id)  
     
     if appointment:
+        # Explicitly format the datetime object to ISO 8601 format
+        if 'appointment_time' in appointment:
+            appointment['appointment_time'] = appointment['appointment_time'].strftime('%Y-%m-%d %H:%M:%S')
         return jsonify(appointment), 200
     else:
         return jsonify({"message": "No upcoming appointments"}), 200
-
+    
 @appointments_bp.route('/available-times', methods=['GET'])
 def get_available_times():
     """Retrieve available times for a given day for booking appointments."""

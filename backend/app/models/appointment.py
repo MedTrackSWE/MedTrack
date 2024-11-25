@@ -70,7 +70,7 @@ class Appointment:
                 AND a.user_id = %s
             WHERE t.hospital_id = %s 
                 AND t.timeslot_date = %s  -- Explicitly filter by timeslot_date
-                AND a.appointment_id IS NULL
+                AND (a.appointment_id IS NULL OR a.status = 'Cancelled')
         """, (selected_date, user_id, hospital_id, selected_date))
             
             available_times = cursor.fetchall()
@@ -148,10 +148,10 @@ class Appointment:
                 SET appointment_time = %s
                 WHERE appointment_id = %s AND status = 'Scheduled'
             """, (new_time, appointment_id))
+            connection.commit()
             if cursor.rowcount > 0:
-                connection.commit()
                 return True
-
+            
             print(f"Failed to reschedule appointment ID {appointment_id}.")
             return False
         except Exception as e:
@@ -185,6 +185,7 @@ class Appointment:
                 SET status = 'Cancelled'
                 WHERE appointment_id = %s AND status = 'Scheduled'
             """, (appointment_id,))
+            
             if cursor.rowcount > 0:
                 connection.commit()
                 return True
