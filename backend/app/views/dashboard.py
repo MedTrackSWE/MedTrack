@@ -7,8 +7,8 @@ dashboard_bp = Blueprint('dashboard', __name__)
 
 @dashboard_bp.route('/medical-history', methods=['GET'])
 def medical_history():
+    return jsonify({"message": "Medical history endpoint works"}), 200
     # Logic to fetch and return medical history
-    ...
 
 @dashboard_bp.route('/appointments', methods=['POST', 'GET'])
 def appointments():
