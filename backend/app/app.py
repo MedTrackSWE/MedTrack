@@ -4,6 +4,7 @@ from config import Config
 from database import get_db_connection
 from views.auth import auth_bp
 from views.dashboard import dashboard_bp
+from views.medical_history import medical_history_bp
 
 def create_app():
     app = Flask(__name__)
@@ -13,6 +14,7 @@ def create_app():
     # Register blueprints
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(dashboard_bp, url_prefix='/api/dashboard')
+    app.register_blueprint(medical_history_bp,url_prefix='/api/medical_history')
     
     return app
 

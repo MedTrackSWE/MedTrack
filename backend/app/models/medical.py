@@ -22,20 +22,50 @@ class MedicalRecord:
         """
         cursor.execute(query, (user_id,))
         return cursor.fetchall()
+    
+
+    #what it is before 
+
+    # @staticmethod
+    # def get_prior_conditions(user_id):
+    #     """Fetches prior conditions or surgeries for the user."""
+    #     db = get_db_connection()
+    #     cursor = db.cursor()
+    #     query = """
+    #         SELECT condition_name, condition_description, condition_date
+    #         FROM Conditions
+    #         WHERE user_id = %s
+    #         ORDER BY diagnosed_date DESC
+    #     """
+    #     cursor.execute(query, (user_id,))
+    #     return cursor.fetchall()
 
     @staticmethod
     def get_prior_conditions(user_id):
-        """Fetches prior conditions or surgeries for the user."""
+        """Fetches prior conditions or surgeries for the user """
         db = get_db_connection()
-        cursor = db.cursor()
-        query = """
-            SELECT condition_name, condition_date
-            FROM medical_conditions
-            WHERE user_id = %s
-            ORDER BY condition_date DESC
-        """
-        cursor.execute(query, (user_id,))
-        return cursor.fetchall()
+        cursor = db.cursor(dictionary=True)
+        try:
+            cursor.execute("SELECT history_id FROM Medical_History WHERE user_id = %s", (user_id,))
+            history = cursor.fetchone()
+            if not history:
+                return []
+            history_id = history['history_id']
+            query = """ 
+            SELECT condition_name, condition_description, diagnosed_date
+            FROM Conditions
+            WHERE history_id = %s
+            ORDER BY diagnosed_date DESC
+            """
+            cursor.execute(query, (history_id,))
+            conditions = cursor.fetchall()
+            return conditions
+        except Exception as e:
+            print(f"Error fetching conditions: {e}")
+            return []
+        finally:
+            cursor.close()
+            db.close()
 
     @staticmethod
     def get_medical_history(user_id):
