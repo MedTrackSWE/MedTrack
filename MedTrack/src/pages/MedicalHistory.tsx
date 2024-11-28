@@ -118,6 +118,7 @@ const MedicalHistory: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'medical' | 'lab'>('medical');
   const [conditions, setConditions] = useState<any[]>([]);
   const [medications, setMedications] = useState<any[]>([]);
+  const [labResults, setLabResults] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
 
@@ -138,9 +139,12 @@ const MedicalHistory: React.FC = () => {
         const medicationsResponse = await fetch(
           `http://127.0.0.1:5000/api/medical_history/medications?user_id=${userId}`
         );
-
+        const labResultsResponse = await fetch(
+          `http://127.0.0.1:5000/api/medical_history?user_id=${userId}`
+        );
         const conditionsData = await conditionsResponse.json();
         const medicationsData = await medicationsResponse.json();
+        const labResultsData = await labResultsResponse.json();
 
         if (conditionsResponse.ok) {
           setConditions(conditionsData);
@@ -153,6 +157,13 @@ const MedicalHistory: React.FC = () => {
         } else {
           setError(medicationsData.error || 'Failed to load medications.');
         }
+
+        if (labResultsResponse.ok) {
+          setLabResults(labResultsData);
+        } else {
+          setError(labResultsData.error || 'Failed to load medications.');
+        }
+
       } catch (error) {
         setError('An error occurred while fetching data.');
       } finally {
@@ -238,11 +249,22 @@ const MedicalHistory: React.FC = () => {
             </section>
           </div>
         )}
-
         {activeTab === 'lab' && (
           <div>
             <h2>Lab Results</h2>
-            <p>Lab results will go here.</p>
+            <section style={{ border: "2px solid black", padding: "20px", marginBottom: "20px" }}>
+              {labResults.length === 0 ? (
+                <p>No lab results found.</p>
+              ) : (
+                labResults.map((result, index) => (
+                  <div key={index}>
+                    <p><strong>Report Date:</strong> {result.report_date}</p>
+                    <p><strong>Lab Results:</strong> {result.lab_results}</p>
+                    <p><strong>Doctor Notes:</strong> {result.doctor_notes}</p>
+                  </div>
+                ))
+              )}
+            </section>
           </div>
         )}
       </div>

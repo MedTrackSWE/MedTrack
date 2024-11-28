@@ -82,19 +82,29 @@ class MedicalRecord:
     @staticmethod
     def get_medical_history(user_id):
         """Fetches medical history records for a specific user."""
-        connection = get_db_connection()
-        cursor = connection.cursor(dictionary=True)
-        
+        db = get_db_connection()
+        cursor = db.cursor(dictionary=True)
         try:
-            cursor.execute("SELECT * FROM MedicalHistory WHERE user_id = %s", (user_id,))
-            history = cursor.fetchall()
-            return history
+            cursor.execute("SELECT history_id FROM Medical_History WHERE user_id = %s", (user_id,))
+            history = cursor.fetchone()
+            if not history:
+                return []
+            history_id = history['history_id']
+            query = """ 
+            SELECT doctor_notes, lab_results, report_date
+            FROM Medical_History
+            WHERE history_id = %s
+            ORDER BY report_date DESC
+            """
+            cursor.execute(query,(history_id,))
+            medicalhistory = cursor.fetchall()
+            return medicalhistory
         except Exception as e:
             print(f"Error fetching medical history: {e}")
             return []
         finally:
             cursor.close()
-            connection.close()
+            db.close()
 
     @staticmethod
     def add_medical_record(user_id, details, date):

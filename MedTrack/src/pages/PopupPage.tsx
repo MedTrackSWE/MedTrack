@@ -52,7 +52,7 @@ const PopupPage: React.FC = () => {
   return (
     <div style={overlayStyles}>
       <div style={popupStyles}>
-        <h2>Do you want to see your medical history?</h2>
+        <h2>Are you sure you want to view your medical history?</h2>
         <div style={buttonContainerStyles}>
           <button style={buttonStyles} onClick={handleYesClick}>
             Yes

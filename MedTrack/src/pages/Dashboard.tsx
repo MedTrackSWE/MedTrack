@@ -123,7 +123,7 @@ const Dashboard: React.FC = () => {
                   View your past appointments and records
                 </p>
                 <Button
-                  color="outline-secondary"
+                  color="primary"
                   onClick={() => navigate('/popup')}
                   //onClick={() => handleNavigation('history')}
                 >

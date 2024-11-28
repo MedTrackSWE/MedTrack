@@ -23,3 +23,9 @@ def get_medications():
     user_id = request.args.get('user_id')
     medications = MedicalRecord.get_medications(user_id)
     return jsonify(medications), 200
+
+@medical_history_bp.route('/',methods=['GET'])
+def get_medical_history():
+    user_id = request.args.get('user_id')
+    medicalhistory = MedicalRecord.get_medical_history(user_id)
+    return jsonify(medicalhistory), 200
