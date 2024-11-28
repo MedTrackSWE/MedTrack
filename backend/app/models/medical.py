@@ -22,23 +22,7 @@ class MedicalRecord:
         """
         cursor.execute(query, (user_id,))
         return cursor.fetchall()
-    
 
-    #what it is before 
-
-    # @staticmethod
-    # def get_prior_conditions(user_id):
-    #     """Fetches prior conditions or surgeries for the user."""
-    #     db = get_db_connection()
-    #     cursor = db.cursor()
-    #     query = """
-    #         SELECT condition_name, condition_description, condition_date
-    #         FROM Conditions
-    #         WHERE user_id = %s
-    #         ORDER BY diagnosed_date DESC
-    #     """
-    #     cursor.execute(query, (user_id,))
-    #     return cursor.fetchall()
 
     @staticmethod
     def get_prior_conditions(user_id):
@@ -67,6 +51,34 @@ class MedicalRecord:
             cursor.close()
             db.close()
 
+    @staticmethod
+    def get_medications(user_id):
+        """Fetches medications for the user"""
+        db = get_db_connection()
+        cursor = db.cursor(dictionary=True)
+        try:
+            cursor.execute("SELECT history_id FROM Medical_History WHERE user_id = %s", (user_id,))
+            history = cursor.fetchone()
+            if not history:
+                return []
+            history_id = history['history_id']
+            query = """ 
+            SELECT medication_name, dosage, start_date, end_date
+            FROM Medications 
+            WHERE history_id = %s 
+            ORDER BY start_date DESC 
+            """
+            cursor.execute(query,(history_id,))
+            medications = cursor.fetchall()
+            return medications 
+        except Exception as e:
+            print (f"Error fetching medications: {e} ")
+            return []
+        finally:
+            cursor.close()
+            db.close()
+
+        
     @staticmethod
     def get_medical_history(user_id):
         """Fetches medical history records for a specific user."""

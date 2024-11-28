@@ -17,3 +17,9 @@ def get_conditions():
     #medical_record = MedicalRecord(user_id)
     conditions = MedicalRecord.get_prior_conditions(user_id)
     return jsonify(conditions), 200
+
+@medical_history_bp.route('/medications',methods=['GET'])
+def get_medications():
+    user_id = request.args.get('user_id')
+    medications = MedicalRecord.get_medications(user_id)
+    return jsonify(medications), 200
