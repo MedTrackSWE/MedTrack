@@ -179,7 +179,7 @@ const App: React.FC = () => {
       if (response.ok) {
         setMessage(data.message);
         if (isLogin) {
-          localStorage.setItem('userId',data.userId); //added this rn to fix hard code user issue
+          localStorage.setItem('userID',data.userID); //added this rn to fix hard code user issue
           // Store the token if your API returns one
           if (data.token) {
             localStorage.setItem('authToken', data.token);

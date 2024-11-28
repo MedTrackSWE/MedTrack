@@ -10,7 +10,7 @@ const MedicalHistory: React.FC = () => {
 
 
   useEffect(() => {
-    const userId = 6
+    const userId = localStorage.getItem('userID');
     if (!userId) { //added this rn
       setError('User not logged in'); //added this rn
       setLoading(false); //added this rn
