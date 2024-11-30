@@ -4,7 +4,8 @@ import App from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import PopupPage from './pages/PopupPage';
 import MedicalHistory from './pages/MedicalHistory';
-import AppointmentScheduler from './pages/AppointmentScheduler';
+import AppointmentScheduler from './pages/AppointmentScheduler'
+import FAQPage from './pages/FAQ';
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import 'bootstrap/dist/css/bootstrap.css'
 
@@ -18,6 +19,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <Route path="/popup" element={<PopupPage />} />
         <Route path="/medical-history" element={<MedicalHistory />} />
         <Route path="/appointment-scheduler" element={<AppointmentScheduler />} />
+        <Route path="/faq" element={<FAQPage />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,

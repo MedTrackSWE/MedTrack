@@ -158,7 +158,9 @@ const Dashboard: React.FC = () => {
                 <p className="text-muted mb-4">Find answers to common questions</p>
                 <Button
                   color="outline-secondary"
-                  onClick={() => handleNavigation('faq')}
+                  onClick={() => navigate('/faq')}
+                  
+                  
                 >
                   View FAQ
                 </Button>
