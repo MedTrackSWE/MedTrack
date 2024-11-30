@@ -13,7 +13,7 @@ const AppointmentScheduler: React.FC = () => {
   const [upcomingAppointment, setUpcomingAppointment] = useState<any>(null);
   
   useEffect(() => {
-    fetch('http://localhost:5000/api/hospitals')
+    fetch('http://127.0.0.1:5000/api/hospitals')
       .then((response) => response.json())
       .then((data) => setHospitals(data))
       .catch(() => setError('Failed to load hospitals.'));
@@ -22,7 +22,7 @@ const AppointmentScheduler: React.FC = () => {
   useEffect(() => {
     if (selectedHospital && selectedDate) {
       fetch(
-        `http://localhost:5000/api/appointments/available-times?user_id=1&date=${selectedDate}&hospital_id=${selectedHospital}`
+        `http://127.0.0.1:5000/api/appointments/available-times?user_id=1&date=${selectedDate}&hospital_id=${selectedHospital}`
       )
         .then((response) => response.json())
         .then((data) => setAvailableTimes(data))
@@ -31,7 +31,7 @@ const AppointmentScheduler: React.FC = () => {
   }, [selectedHospital, selectedDate]);
   
   useEffect(() => {
-    fetch('http://localhost:5000/api/appointments/upcoming?user_id=1')
+    fetch('http://127.0.0.1:5000/api/appointments/upcoming?user_id=1')
       .then((response) => response.json())
       .then((data) => setUpcomingAppointment(data))
       .catch(() => setError('Failed to load upcoming appointment.'));
@@ -49,7 +49,7 @@ const AppointmentScheduler: React.FC = () => {
   
     const appointmentTime = `${selectedDate} ${selectedTime}`;
     try {
-      const response = await fetch('http://localhost:5000/api/appointments/book', {
+      const response = await fetch('http://127.0.0.1:5000/api/appointments/book', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -82,7 +82,7 @@ const AppointmentScheduler: React.FC = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/appointments/reschedule', {
+      const response = await fetch('http://127.0.0.1:5000/api/appointments/reschedule', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ appointment_id: appointmentId, new_time: newTime }),
@@ -109,7 +109,7 @@ const AppointmentScheduler: React.FC = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/appointments/cancel', {
+      const response = await fetch('http://127.0.0.1:5000/api/appointments/cancel', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ appointment_id: appointmentId }),
