@@ -72,7 +72,61 @@ const AppointmentScheduler: React.FC = () => {
       setError('An error occurred while booking the appointment.');
     }
   };
-  
+
+  // reschedule appointment functionality
+  const handleReschedule = async (appointmentId: number) => {
+    const newTime = prompt('Enter the new appointment time (YYYY-MM-DD HH:MM:SS):');
+    if (!newTime) {
+      alert('Rescheduling canceled.');
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:5000/api/appointments/reschedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ appointment_id: appointmentId, new_time: newTime }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        setMessage('Appointment successfully rescheduled!');
+        setUpcomingAppointment((prev: any) => ({
+          ...prev,
+          appointment_time: newTime,
+        }));
+      } else {
+        setError(data.error || 'Failed to reschedule appointment.');
+      }
+    } catch {
+      setError('An error occurred while rescheduling the appointment.');
+    }
+  };
+  // cancel appointment
+  const handleCancel = async (appointmentId: number) => {
+    if (!window.confirm('Are you sure you want to cancel this appointment?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:5000/api/appointments/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ appointment_id: appointmentId }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        setMessage('Appointment successfully canceled!');
+        setUpcomingAppointment(null);
+      } else {
+        setError(data.error || 'Failed to cancel appointment.');
+      }
+    } catch {
+      setError('An error occurred while canceling the appointment.');
+    }
+  };
+
   return (
     <div className="container mt-5">
       <h1>Appointment Scheduler</h1>
@@ -163,6 +217,18 @@ const AppointmentScheduler: React.FC = () => {
                 <p>
                   <strong>Address:</strong> {upcomingAppointment.address}
                 </p>
+                <button
+                  className="btn btn-warning me-2"
+                  onClick={() => handleReschedule(upcomingAppointment.appointment_id)}
+                >
+                  Reschedule Appointment
+                </button>
+                <button
+                  className="btn btn-danger"
+                  onClick={() => handleCancel(upcomingAppointment.appointment_id)}
+                >
+                  Cancel Appointment
+                </button>
               </div>
             ) : (
               <p>No upcoming appointments found.</p>
