@@ -107,6 +107,17 @@ def get_last_inserted_appointment_id(client):
         cursor.close()
         connection.close()
 
+def get_last_inserted_user(client):
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary = True)
+    try:
+        cursor.execute("SELECT MAX(user_id) AS last_id FROM Users")
+        result = cursor.fetchone()
+        return result['last_id'] if result else None
+    finally:
+        cursor.close()
+        connection.close()
+
 def is_time_slot_available(client, hospital_id, date, time):
     """Check if a specific time slot is available (no scheduled appointment)."""
     connection = get_db_connection()
@@ -143,7 +154,7 @@ def test_upcoming_appointments(client):
         assert appointment.get("message") == "No upcoming appointments"
 
 def test_available_times(client):
-    user_id = 1
+    user_id = get_last_inserted_user(client)
     selected_date = "2024-12-01"
     hospital_id = 1
     
