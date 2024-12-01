@@ -46,7 +46,7 @@ const Dashboard: React.FC = () => {
 
         {/* Header Section */}
         <div className="mb-4 pt-5">
-          <h1 className="display-4 fw-bold">Welcome to your Dashboard</h1>
+          <h1 className="display-4 fw-bold">Welcome to Your MedTrack Dashboard</h1>
           <p className="text-muted lead">
             Manage your appointments and access important information
           </p>
@@ -89,7 +89,7 @@ const Dashboard: React.FC = () => {
                 </p>
                 <Button
                   color="primary"
-                  onClick={() => handleNavigation('appointments')}
+                  onClick={() => navigate('/appointment-scheduler')}
                 >
                   Book Appointment
                 </Button>
@@ -158,7 +158,9 @@ const Dashboard: React.FC = () => {
                 <p className="text-muted mb-4">Find answers to common questions</p>
                 <Button
                   color="outline-secondary"
-                  onClick={() => handleNavigation('faq')}
+                  onClick={() => navigate('/faq')}
+                  
+                  
                 >
                   View FAQ
                 </Button>
