@@ -50,5 +50,6 @@ def login():
     if check_password_hash(user['password_hash'], password):
         return jsonify({"message": "Login successful",
                         "user_id" : user['user_id']}), 200
+
     else:
         return jsonify({"error": "Invalid credentials"}), 401
