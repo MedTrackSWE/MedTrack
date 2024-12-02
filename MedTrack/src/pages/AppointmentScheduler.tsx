@@ -11,15 +11,28 @@ const AppointmentScheduler: React.FC = () => {
   const [message, setMessage] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [upcomingAppointments, setUpcomingAppointments] = useState<any[]>([]);
-  const [rescheduleDetails, setRescheduleDetails] = useState<{ id: number; date: string; time: string } | null>(null);
+  const [rescheduleDetails, setRescheduleDetails] = useState<{ id: number; hospital_id: number; date: string; time: string } | null>(null);
 
   const userID = localStorage.getItem('userID');
 
   const fetchUpcomingAppointments = () => {
     fetch(`http://127.0.0.1:5000/api/appointments/upcoming?user_id=${userID}`)
       .then((response) => response.json())
-      .then((data) => setUpcomingAppointments(data))
+      .then((data) => {
+        console.log('Upcoming appointments:', data);
+        setUpcomingAppointments(data);
+      })
       .catch(() => setError('Failed to load upcoming appointments.'));
+  };
+
+  // Fetch available times for scheduling and rescheduling
+  const fetchAvailableTimes = (hospital_id: number, date: string) => {
+    fetch(
+      `http://127.0.0.1:5000/api/appointments/available-times?user_id=${userID}&date=${date}&hospital_id=${hospital_id}`
+    )
+      .then((response) => response.json())
+      .then((data) => setAvailableTimes(data))
+      .catch(() => setError('Failed to load available times.'));
   };
 
   useEffect(() => {
@@ -31,12 +44,7 @@ const AppointmentScheduler: React.FC = () => {
 
   useEffect(() => {
     if (selectedHospital && selectedDate) {
-      fetch(
-        `http://127.0.0.1:5000/api/appointments/available-times?user_id=${userID}&date=${selectedDate}&hospital_id=${selectedHospital}`
-      )
-        .then((response) => response.json())
-        .then((data) => setAvailableTimes(data))
-        .catch(() => setError('Failed to load available times.'));
+      fetchAvailableTimes(selectedHospital, selectedDate);
     }
   }, [selectedHospital, selectedDate]);
 
@@ -44,7 +52,6 @@ const AppointmentScheduler: React.FC = () => {
     fetchUpcomingAppointments();
   }, []);
 
-  // Handle appointment booking
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
@@ -67,15 +74,14 @@ const AppointmentScheduler: React.FC = () => {
         }),
       });
 
+      const data = await response.json();
       if (response.ok) {
         setMessage('Appointment successfully booked!');
-        setTimeout(() => setMessage(''), 5000); // Clear message after 5 seconds
         setSelectedHospital(null);
         setSelectedDate('');
         setSelectedTime('');
-        fetchUpcomingAppointments(); // Refresh the upcoming appointments
+        fetchUpcomingAppointments();
       } else {
-        const data = await response.json();
         setError(data.error || 'Failed to book appointment.');
       }
     } catch {
@@ -83,28 +89,25 @@ const AppointmentScheduler: React.FC = () => {
     }
   };
 
-  // Handle reschedule
   const handleReschedule = async (appointmentID: number) => {
     if (!rescheduleDetails || rescheduleDetails.id !== appointmentID || !rescheduleDetails.date || !rescheduleDetails.time) {
-      setError('Please select a valid date and time.');
+      setError('Please select a valid reschedule date and time.');
       return;
     }
 
-    const newAppointmentTime = `${rescheduleDetails.date} ${rescheduleDetails.time}`;
     try {
       const response = await fetch('http://127.0.0.1:5000/api/appointments/reschedule', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           appointment_id: appointmentID,
-          new_time: newAppointmentTime,
+          new_time: `${rescheduleDetails.date} ${rescheduleDetails.time}`,
         }),
       });
 
       if (response.ok) {
         setMessage('Appointment successfully rescheduled!');
-        setTimeout(() => setMessage(''), 5000); // Clear message after 5 seconds
-        fetchUpcomingAppointments(); // Refresh the upcoming appointments
+        fetchUpcomingAppointments();
       } else {
         setError('Failed to reschedule the appointment.');
       }
@@ -113,7 +116,6 @@ const AppointmentScheduler: React.FC = () => {
     }
   };
 
-  // Handle cancel
   const handleCancel = async (appointmentID: number) => {
     if (!window.confirm('Are you sure you want to cancel this appointment?')) return;
 
@@ -126,8 +128,7 @@ const AppointmentScheduler: React.FC = () => {
 
       if (response.ok) {
         setMessage('Appointment successfully canceled.');
-        setTimeout(() => setMessage(''), 5000); // Clear message after 5 seconds
-        fetchUpcomingAppointments(); // Refresh the upcoming appointments
+        fetchUpcomingAppointments();
       } else {
         setError('Failed to cancel the appointment.');
       }
@@ -138,11 +139,14 @@ const AppointmentScheduler: React.FC = () => {
 
   return (
     <div className="container mt-5">
-      {/* Notification Messages */}
-      {message && <div className="alert alert-success">{message}</div>}
-      {error && <div className="alert alert-danger">{error}</div>}
-
       <h1>Appointment Scheduler</h1>
+
+      {/* Message Window */}
+      {(message || error) && (
+        <div className={`alert ${message ? 'alert-success' : 'alert-danger'}`}>
+          {message || error}
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="tabs">
@@ -225,12 +229,10 @@ const AppointmentScheduler: React.FC = () => {
                     <strong>Time:</strong> {appointment.appointment_time}
                   </p>
                   <p>
-                    <strong>Hospital:</strong> {appointment.hospital_name}
+                    <strong>Hospital:</strong> {appointment.name}
                   </p>
-                  <p>
-                    <strong>Address:</strong> {appointment.address}
-                  </p>
-                  <div className="actions">
+                  <div className="form-group">
+                    <label>Reschedule Date</label>
                     <input
                       type="date"
                       className="form-control"
@@ -238,11 +240,15 @@ const AppointmentScheduler: React.FC = () => {
                         setRescheduleDetails((prev) => ({
                           ...prev,
                           id: appointment.appointment_id,
+                          hospital_id: appointment.hospital_id,
                           date: e.target.value,
-                          time: prev?.time || '',
+                          time: '',
                         }))
                       }
                     />
+                  </div>
+                  <div className="form-group">
+                    <label>Reschedule Time</label>
                     <select
                       className="form-select"
                       onChange={(e) =>
@@ -250,7 +256,6 @@ const AppointmentScheduler: React.FC = () => {
                           ...prev,
                           id: appointment.appointment_id,
                           time: e.target.value,
-                          date: prev?.date || '',
                         }))
                       }
                     >
@@ -261,19 +266,19 @@ const AppointmentScheduler: React.FC = () => {
                         </option>
                       ))}
                     </select>
-                    <button
-                      className="btn btn-secondary"
-                      onClick={() => handleReschedule(appointment.appointment_id)}
-                    >
-                      Reschedule
-                    </button>
-                    <button
-                      className="btn btn-danger"
-                      onClick={() => handleCancel(appointment.appointment_id)}
-                    >
-                      Cancel
-                    </button>
                   </div>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => handleReschedule(appointment.appointment_id)}
+                  >
+                    Reschedule
+                  </button>
+                  <button
+                    className="btn btn-danger"
+                    onClick={() => handleCancel(appointment.appointment_id)}
+                  >
+                    Cancel
+                  </button>
                 </div>
               ))
             ) : (

@@ -37,7 +37,7 @@ class Appointment:
         try:
             cursor.execute("""
                SELECT a.appointment_id, a.appointment_time, a.status, 
-                h.name AS hospital_name, h.address
+                h.name, h.hospital_id AS hospital_name, h.address
                 FROM Appointments a
                 JOIN Hospitals h ON a.hospital_id = h.hospital_id
                 WHERE a.user_id = %s 
@@ -56,21 +56,31 @@ class Appointment:
             connection.close()
 
     @staticmethod
-    def get_available_times(selected_date, user_id, hospital_id):
+    def get_available_times(selected_date, hospital_id):
         """Retrieve available times for a given day for booking appointments."""
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
         
         try:
             cursor.execute("""
-            SELECT t.timeslot_time
-            FROM Timeslots t
-            LEFT JOIN Appointments a ON t.hospital_id = a.hospital_id 
-                AND t.timeslot_time = TIME(a.appointment_time) 
-                AND DATE(a.appointment_time) = %s
-            WHERE t.hospital_id = %s 
-                AND t.timeslot_date = %s  -- Explicitly filter by timeslot_date
-                AND (a.appointment_id IS NULL OR a.status = 'Cancelled')
+            SELECT DISTINCT t.timeslot_time 
+        FROM Timeslots t
+        LEFT JOIN Appointments a 
+            ON t.hospital_id = a.hospital_id 
+            AND t.timeslot_time = TIME(a.appointment_time) 
+            AND DATE(a.appointment_time) = %s -- Correct date format
+        WHERE t.hospital_id = %s
+        AND t.timeslot_date = %s -- Correct date format
+        AND (a.appointment_id IS NULL OR a.status = 'Cancelled') -- Include only available or cancelled appointments
+        AND NOT EXISTS (
+            SELECT 1
+            FROM Appointments a2
+            WHERE a2.hospital_id = t.hospital_id
+                AND TIME(a2.appointment_time) = t.timeslot_time
+                AND DATE(a2.appointment_time) = t.timeslot_date
+                AND a2.status = 'Scheduled'
+        )
+
         """, (selected_date, hospital_id, selected_date))
             
             available_times = cursor.fetchall()

@@ -47,7 +47,7 @@ def get_available_times():
     selected_date = request.args.get('date')
     hospital_id = request.args.get('hospital_id')
     
-    available_times = Appointment.get_available_times(selected_date, user_id, hospital_id)  
+    available_times = Appointment.get_available_times(selected_date, hospital_id)  
     return jsonify(available_times), (200 if available_times else 500)
 
 
