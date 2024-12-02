@@ -124,6 +124,28 @@ const AppointmentScheduler: React.FC = () => {
     }
   };
 
+  const handleCancel = async (appointmentID: number) => {
+    if (!window.confirm('Are you sure you want to cancel this appointment?')) return;
+
+    try {
+      const response = await fetch('http://127.0.0.1:5000/api/appointments/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ appointment_id: appointmentID }),
+      });
+
+      if (response.ok) {
+        setMessage('Appointment successfully canceled.');
+        fetchUpcomingAppointments();
+      } else {
+        setError('Failed to cancel the appointment.');
+      }
+    } catch {
+      setError('An error occurred while canceling the appointment.');
+    }
+  };
+
+
   return (
     <div className="container mt-5">
       <h1>Appointment Scheduler</h1>
