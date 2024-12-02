@@ -1,19 +1,24 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom';
-import Button from '../assets/components/Button'; // Adjust the import path as needed
+import Button from '../assets/components/Button';
 
 type NavigationPage = 'appointments' | 'history' | 'faq'
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
+
   const handleNavigation = (page: NavigationPage): void => {
-    // Navigation logic would go here
-    console.log(`Navigating to ${page}`)
+    console.log(`Navigating to ${page}`);
   }
 
   const handleSignOut = (): void => {
-    navigate('/');
-    console.log('Signing out...')
+    // Clear any auth tokens or session data
+    if (sessionStorage.getItem('authToken')) {
+      sessionStorage.removeItem('authToken');
+    }
+    
+    // Use window.location.replace to prevent back button
+    window.location.replace('/');
   }
 
   return (
@@ -59,7 +64,6 @@ const Dashboard: React.FC = () => {
             <div className="card h-100 shadow-sm hover-shadow">
               <div className="card-body text-center p-4">
                 <div className="rounded-circle bg-primary bg-opacity-10 p-3 d-inline-flex mb-3">
-                  {/* Calendar Icon */}
                   <svg
                     className="text-primary"
                     width="32"
@@ -102,7 +106,6 @@ const Dashboard: React.FC = () => {
             <div className="card h-100 shadow-sm hover-shadow">
               <div className="card-body text-center p-4">
                 <div className="rounded-circle bg-success bg-opacity-10 p-3 d-inline-flex mb-3">
-                  {/* History Icon */}
                   <svg
                     className="text-success"
                     width="32"
@@ -125,7 +128,6 @@ const Dashboard: React.FC = () => {
                 <Button
                   color="outline-secondary"
                   onClick={() => navigate('/popup')}
-                  //onClick={() => handleNavigation('history')}
                 >
                   View History
                 </Button>
@@ -138,7 +140,6 @@ const Dashboard: React.FC = () => {
             <div className="card h-100 shadow-sm hover-shadow">
               <div className="card-body text-center p-4">
                 <div className="rounded-circle bg-info bg-opacity-10 p-3 d-inline-flex mb-3">
-                  {/* Question Mark Icon */}
                   <svg
                     className="text-info"
                     width="32"
@@ -159,8 +160,6 @@ const Dashboard: React.FC = () => {
                 <Button
                   color="outline-secondary"
                   onClick={() => navigate('/faq')}
-                  
-                  
                 >
                   View FAQ
                 </Button>
