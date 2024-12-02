@@ -12,25 +12,34 @@ const AppointmentScheduler: React.FC = () => {
   const [error, setError] = useState<string>('');
   const [upcomingAppointments, setUpcomingAppointments] = useState<any[]>([]);
   const [rescheduleDetails, setRescheduleDetails] = useState<{ id: number; hospital_id: number; date: string; time: string } | null>(null);
+  const [rescheduleTimes, setRescheduleTimes] = useState<{ [key: number]: any[] }>({}); // Times for each appointment
 
   const userID = localStorage.getItem('userID');
 
   const fetchUpcomingAppointments = () => {
     fetch(`http://127.0.0.1:5000/api/appointments/upcoming?user_id=${userID}`)
       .then((response) => response.json())
-      .then((data) => {
-        console.log('Upcoming appointments:', data);
-        setUpcomingAppointments(data);
-      })
+      .then((data) => {console.log(data); setUpcomingAppointments(data)})
       .catch(() => setError('Failed to load upcoming appointments.'));
   };
 
-  const fetchAvailableTimes = (hospital_id: number, date: string) => {
+  const fetchAvailableTimes = (hospital_id: number, date: string, appointment_id?: number) => {
     fetch(
       `http://127.0.0.1:5000/api/appointments/available-times?user_id=${userID}&date=${date}&hospital_id=${hospital_id}`
     )
       .then((response) => response.json())
-      .then((data) => setAvailableTimes(data))
+      .then((data) => {
+        if (appointment_id) {
+          // Update times for a specific appointment
+          setRescheduleTimes((prev) => ({
+            ...prev,
+            [appointment_id]: data,
+          }));
+        } else {
+          // General available times
+          setAvailableTimes(data);
+        }
+      })
       .catch(() => setError('Failed to load available times.'));
   };
 
@@ -112,30 +121,6 @@ const AppointmentScheduler: React.FC = () => {
       }
     } catch {
       setError('An error occurred while rescheduling the appointment.');
-    }
-  };
-
-  const handleCancel = async (appointmentID: number) => {
-    if (!window.confirm('Are you sure you want to cancel this appointment?')) return;
-
-    try {
-      const response = await fetch('http://127.0.0.1:5000/api/appointments/cancel', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ appointment_id: appointmentID }),
-      });
-
-      if (response.ok) {
-        setMessage('Appointment successfully canceled.');
-        fetchUpcomingAppointments();
-        if (selectedHospital && selectedDate) {
-          fetchAvailableTimes(selectedHospital, selectedDate);
-        }
-      } else {
-        setError('Failed to cancel the appointment.');
-      }
-    } catch {
-      setError('An error occurred while canceling the appointment.');
     }
   };
 
@@ -247,9 +232,7 @@ const AppointmentScheduler: React.FC = () => {
                           date: newDate,
                           time: '',
                         }));
-                        if (appointment.hospital_id && newDate) {
-                          fetchAvailableTimes(appointment.hospital_id, newDate);
-                        }
+                        fetchAvailableTimes(appointment.hospital_id, newDate, appointment.appointment_id);
                       }}
                     />
                   </div>
@@ -257,16 +240,16 @@ const AppointmentScheduler: React.FC = () => {
                     <label>Reschedule Time</label>
                     <select
                       className="form-select"
+                      value={rescheduleDetails?.time || ''}
                       onChange={(e) =>
                         setRescheduleDetails((prev) => ({
                           ...prev,
-                          id: appointment.appointment_id,
                           time: e.target.value,
                         }))
                       }
                     >
                       <option value="">Select a new time</option>
-                      {availableTimes.map((time, index) => (
+                      {(rescheduleTimes[appointment.appointment_id] || []).map((time, index) => (
                         <option key={index} value={time.timeslot_time}>
                           {time.timeslot_time}
                         </option>
@@ -298,6 +281,7 @@ const AppointmentScheduler: React.FC = () => {
 };
 
 export default AppointmentScheduler;
+
 
 // import React, { useState, useEffect, FormEvent } from 'react';
 // import '../tabs.css';

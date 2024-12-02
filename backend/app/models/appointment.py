@@ -36,14 +36,26 @@ class Appointment:
         
         try:
             cursor.execute("""
-               SELECT a.appointment_id, a.appointment_time, a.status, 
-                h.name, h.hospital_id AS hospital_name, h.address
-                FROM Appointments a
-                JOIN Hospitals h ON a.hospital_id = h.hospital_id
-                WHERE a.user_id = %s 
-                AND a.appointment_time > NOW() 
-                AND a.status = 'Scheduled'
-                ORDER BY a.appointment_time ASC""", (user_id,))
+               SELECT 
+    a.appointment_id, 
+    a.appointment_time, 
+    a.status, 
+    h.name AS hospital_name, 
+    h.hospital_id, -- Correctly using h.hospital_id
+    h.address
+FROM 
+    Appointments a
+JOIN 
+    Hospitals h 
+ON 
+    a.hospital_id = h.hospital_id
+WHERE 
+    a.user_id = %s 
+    AND a.appointment_time > NOW() 
+    AND a.status = 'Scheduled'
+ORDER BY 
+    a.appointment_time ASC
+""", (user_id,))
             
             return cursor.fetchall()
         
