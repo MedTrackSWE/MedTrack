@@ -17,6 +17,22 @@ interface Appointment {
   address: string;
 }
 
+// New interfaces for API requests
+interface BookAppointmentRequest {
+  user_id: string | null;
+  appointment_time: string;
+  hospital_id: number;
+}
+
+interface RescheduleAppointmentRequest {
+  appointment_id: number;
+  new_time: string;
+}
+
+interface CancelAppointmentRequest {
+  appointment_id: number;
+}
+
 const AppointmentScheduler: React.FC = () => {
   // State management
   const [activeTab, setActiveTab] = useState<'schedule' | 'upcoming'>('schedule');
@@ -28,6 +44,8 @@ const AppointmentScheduler: React.FC = () => {
   const [message, setMessage] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [upcomingAppointments, setUpcomingAppointments] = useState<Appointment[]>([]);
+  const [isRescheduling, setIsRescheduling] = useState<boolean>(false);
+  const [selectedAppointmentForReschedule, setSelectedAppointmentForReschedule] = useState<number | null>(null);
 
   const userID = localStorage.getItem('userID');
 
@@ -54,12 +72,12 @@ const AppointmentScheduler: React.FC = () => {
         .then((data) => setAvailableTimes(data))
         .catch(() => setError('Failed to load available times.'));
     }
-  }, [selectedHospital, selectedDate]);
+  }, [selectedHospital, selectedDate, userID]);
 
   // Fetch upcoming appointments
   useEffect(() => {
     fetchUpcomingAppointments();
-  }, []);
+  }, [userID]);
 
   // Form handling
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -73,71 +91,77 @@ const AppointmentScheduler: React.FC = () => {
     }
 
     const appointmentTime = `${selectedDate} ${selectedTime}`;
+
     try {
-      const response = await fetch('http://127.0.0.1:5000/api/appointments/book', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      let url = 'http://127.0.0.1:5000/api/appointments/book';
+      let requestBody: BookAppointmentRequest | RescheduleAppointmentRequest;
+
+      // Prepare the appropriate request body based on the operation
+      if (isRescheduling && selectedAppointmentForReschedule) {
+        url = 'http://127.0.0.1:5000/api/appointments/reschedule';
+        requestBody = {
+          appointment_id: selectedAppointmentForReschedule,
+          new_time: appointmentTime
+        };
+      } else {
+        requestBody = {
           user_id: userID,
           appointment_time: appointmentTime,
-          hospital_id: selectedHospital,
-        }),
+          hospital_id: selectedHospital
+        };
+      }
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();
       if (response.ok) {
-        setMessage('Appointment successfully booked!');
+        setMessage(isRescheduling ? 'Appointment successfully rescheduled!' : 'Appointment successfully booked!');
         resetForm();
-        fetchUpcomingAppointments();
+        await fetchUpcomingAppointments();
+        if (isRescheduling) {
+          setIsRescheduling(false);
+          setSelectedAppointmentForReschedule(null);
+        }
       } else {
-        setError(data.error || 'Failed to book appointment.');
+        setError(data.error || 'Failed to process appointment.');
       }
     } catch {
-      setError('An error occurred while booking the appointment.');
+      setError('An error occurred while processing the appointment.');
     }
   };
 
-  const handleReschedule = async (appointmentId: number) => {
-    const newTime = prompt('Enter the new appointment time (YYYY-MM-DD HH:MM:SS):');
-    if (!newTime) return;
-
-    try {
-      const response = await fetch('http://127.0.0.1:5000/api/appointments/reschedule', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ appointment_id: appointmentId, new_time: newTime }),
-      });
-
-      const data = await response.json();
-      if (response.ok) {
-        setMessage('Appointment successfully rescheduled!');
-        fetchUpcomingAppointments();
-      } else {
-        setError(data.error || 'Failed to reschedule appointment.');
-      }
-    } catch {
-      setError('An error occurred while rescheduling the appointment.');
-    }
+  const startReschedule = (appointmentId: number) => {
+    setIsRescheduling(true);
+    setSelectedAppointmentForReschedule(appointmentId);
+    setActiveTab('schedule');
+    resetForm();
   };
 
   const handleCancel = async (appointmentId: number) => {
     if (!window.confirm('Are you sure you want to cancel this appointment?')) return;
 
     try {
+      const requestBody: CancelAppointmentRequest = {
+        appointment_id: appointmentId
+      };
+
       const response = await fetch('http://127.0.0.1:5000/api/appointments/cancel', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ appointment_id: appointmentId }),
+        body: JSON.stringify(requestBody),
       });
 
-      const data = await response.json();
       if (response.ok) {
-        setMessage('Appointment successfully canceled!');
-        // Remove the canceled appointment from the list
         setUpcomingAppointments(prevAppointments => 
           prevAppointments.filter(apt => apt.appointment_id !== appointmentId)
         );
+        setMessage('Appointment successfully canceled!');
       } else {
+        const data = await response.json();
         setError(data.error || 'Failed to cancel appointment.');
       }
     } catch {
@@ -150,18 +174,25 @@ const AppointmentScheduler: React.FC = () => {
     setSelectedHospital(null);
     setSelectedDate('');
     setSelectedTime('');
+    setError('');
+    setMessage('');
   };
 
   const fetchUpcomingAppointments = async () => {
+    if (!userID) return;
+    
     try {
       const response = await fetch(`http://127.0.0.1:5000/api/appointments/upcoming?user_id=${userID}`);
       const data = await response.json();
-      setUpcomingAppointments(Array.isArray(data) ? data : [data].filter(Boolean));
+      // Ensure we handle both single appointment and array responses
+      const appointments = Array.isArray(data) ? data : [data].filter(Boolean);
+      setUpcomingAppointments(appointments);
     } catch {
       setError('Failed to load upcoming appointments.');
     }
   };
 
+  // Rest of the component remains the same...
   return (
     <div className="container mt-5">
       <div className="d-flex justify-content-between align-items-center mb-4">
@@ -179,11 +210,15 @@ const AppointmentScheduler: React.FC = () => {
           className={`tab ${activeTab === 'schedule' ? 'active' : ''}`}
           onClick={() => setActiveTab('schedule')}
         >
-          Schedule Appointment
+          {isRescheduling ? 'Reschedule Appointment' : 'Schedule Appointment'}
         </button>
         <button
           className={`tab ${activeTab === 'upcoming' ? 'active' : ''}`}
-          onClick={() => setActiveTab('upcoming')}
+          onClick={() => {
+            setActiveTab('upcoming');
+            setIsRescheduling(false);
+            setSelectedAppointmentForReschedule(null);
+          }}
         >
           Upcoming Appointments
         </button>
@@ -192,7 +227,12 @@ const AppointmentScheduler: React.FC = () => {
       <div className="tab-content">
         {activeTab === 'schedule' && (
           <div>
-            <h2>Schedule a New Appointment</h2>
+            <h2>{isRescheduling ? 'Reschedule Appointment' : 'Schedule a New Appointment'}</h2>
+            {isRescheduling && (
+              <div className="alert alert-info">
+                Please select a new date and time for your appointment
+              </div>
+            )}
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label>Choose a Hospital</label>
@@ -239,9 +279,24 @@ const AppointmentScheduler: React.FC = () => {
               {error && <p className="text-danger">{error}</p>}
               {message && <p className="text-success">{message}</p>}
 
-              <button type="submit" className="btn btn-primary">
-                Book Appointment
-              </button>
+              <div className="mt-3">
+                <button type="submit" className="btn btn-primary me-2">
+                  {isRescheduling ? 'Confirm Reschedule' : 'Book Appointment'}
+                </button>
+                {isRescheduling && (
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      setIsRescheduling(false);
+                      setSelectedAppointmentForReschedule(null);
+                      resetForm();
+                    }}
+                  >
+                    Cancel Reschedule
+                  </button>
+                )}
+              </div>
             </form>
           </div>
         )}
@@ -249,6 +304,8 @@ const AppointmentScheduler: React.FC = () => {
         {activeTab === 'upcoming' && (
           <div>
             <h2>Your Upcoming Appointments</h2>
+            {error && <p className="text-danger">{error}</p>}
+            {message && <p className="text-success">{message}</p>}
             {upcomingAppointments.length > 0 ? (
               <div className="appointments-list">
                 {upcomingAppointments.map((appointment) => (
@@ -264,7 +321,7 @@ const AppointmentScheduler: React.FC = () => {
                       <div className="btn-group">
                         <button
                           className="btn btn-warning me-2"
-                          onClick={() => handleReschedule(appointment.appointment_id)}
+                          onClick={() => startReschedule(appointment.appointment_id)}
                         >
                           Reschedule
                         </button>
