@@ -101,7 +101,7 @@ class MedicalRecord:
             ORDER BY report_date DESC
             """
             cursor.execute(query,(history_id,))
-            medicalhistory = cursor.fetchone()
+            medicalhistory = cursor.fetchall()
             return medicalhistory
         except Exception as e:
             print(f"Error fetching medical history: {e}")
