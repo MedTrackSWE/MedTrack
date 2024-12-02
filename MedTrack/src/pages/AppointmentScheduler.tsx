@@ -238,7 +238,7 @@ const AppointmentScheduler: React.FC = () => {
                     <strong>Time:</strong> {appointment.appointment_time}
                   </p>
                   <p>
-                    <strong>Hospital:</strong> {appointment.name}
+                    <strong>Hospital:</strong> {appointment.hospital_name}
                   </p>
                   <div className="form-group">
                     <label>Reschedule Date</label>
