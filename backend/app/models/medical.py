@@ -46,10 +46,14 @@ class MedicalRecord:
             return conditions
         except Exception as e:
             print(f"Error fetching conditions: {e}")
+            cursor.reset()
             return []
         finally:
-            cursor.close()
-            db.close()
+            cursor.reset()
+            if cursor:
+                cursor.close()
+            if db:
+                db.close()
 
     @staticmethod
     def get_medications(user_id):
@@ -88,7 +92,7 @@ class MedicalRecord:
             cursor.execute("SELECT history_id FROM Medical_History WHERE user_id = %s", (user_id,))
             history = cursor.fetchone()
             if not history:
-                return []
+                return {"doctor_notes": "", "lab_results": "", "report_date": ""}
             history_id = history['history_id']
             query = """ 
             SELECT doctor_notes, lab_results, report_date
@@ -97,7 +101,7 @@ class MedicalRecord:
             ORDER BY report_date DESC
             """
             cursor.execute(query,(history_id,))
-            medicalhistory = cursor.fetchall()
+            medicalhistory = cursor.fetchone()
             return medicalhistory
         except Exception as e:
             print(f"Error fetching medical history: {e}")

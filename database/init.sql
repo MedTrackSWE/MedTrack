@@ -14,6 +14,7 @@ CREATE TABLE Medical_History (
     doctor_notes TEXT,
     lab_results TEXT,
     report_date DATE,
+    UNIQUE (user_id),
     FOREIGN KEY (user_id) REFERENCES Users(user_id)
 );
 
