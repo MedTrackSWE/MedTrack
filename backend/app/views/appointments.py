@@ -56,8 +56,11 @@ def book_appointment():
     """Book an appointment for a specific date and time."""
     data = request.json
     user_id = data.get('user_id')
+    print(user_id)
     appointment_time = data.get('appointment_time')  # Expected format: YYYY-MM-DD HH:MM:SS
+    print(appointment_time)
     hospital_id = data.get('hospital_id')
+    print(hospital_id)
     
     success = Appointment.book_appointment(user_id, appointment_time, hospital_id)  
     

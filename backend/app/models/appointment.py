@@ -36,15 +36,16 @@ class Appointment:
         
         try:
             cursor.execute("""
-                SELECT a.appointment_time, a.status, h.name AS hospital_name, h.address
+               SELECT a.appointment_id, a.appointment_time, a.status, 
+                h.name AS hospital_name, h.address
                 FROM Appointments a
                 JOIN Hospitals h ON a.hospital_id = h.hospital_id
-                WHERE a.user_id = %s AND a.appointment_time > NOW() AND a.status = 'Scheduled'
-                ORDER BY a.appointment_time ASC
-                LIMIT 1
-            """, (user_id,))
+                WHERE a.user_id = %s 
+                AND a.appointment_time > NOW() 
+                AND a.status = 'Scheduled'
+                ORDER BY a.appointment_time ASC""", (user_id,))
             
-            return cursor.fetchone()
+            return cursor.fetchall()
         
         except Exception as e:
             print(f"Error fetching upcoming appointment: {e}")
@@ -67,11 +68,10 @@ class Appointment:
             LEFT JOIN Appointments a ON t.hospital_id = a.hospital_id 
                 AND t.timeslot_time = TIME(a.appointment_time) 
                 AND DATE(a.appointment_time) = %s
-                AND a.user_id = %s
             WHERE t.hospital_id = %s 
                 AND t.timeslot_date = %s  -- Explicitly filter by timeslot_date
                 AND (a.appointment_id IS NULL OR a.status = 'Cancelled')
-        """, (selected_date, user_id, hospital_id, selected_date))
+        """, (selected_date, hospital_id, selected_date))
             
             available_times = cursor.fetchall()
             
