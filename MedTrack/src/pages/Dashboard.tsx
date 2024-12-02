@@ -12,29 +12,26 @@ const Dashboard: React.FC = () => {
   }
 
   const handleSignOut = (): void => {
-    // Clear any auth tokens or session data
-    if (sessionStorage.getItem('authToken')) {
-      sessionStorage.removeItem('authToken');
+    sessionStorage.clear();
+    localStorage.clear();
+  
+    // Push many blank states to overflow history 
+    for (let i = 0; i < window.history.length + 50; i++) {
+      window.history.pushState(null, '', '/');
     }
   
-    // Replace the current state to prevent back navigation
-    window.history.pushState(null, '', '/');
-    window.history.replaceState(null, '', '/');
-  
-    // Clear the browser's history stack to disable the back button
+    // Clear any remaining history
+    window.history.go(1);
+    
     const preventBack = () => {
-      window.history.pushState(null, '', '/');
+      window.history.forward();
+      window.location.replace('/');
     };
   
-    // Listen to the 'popstate' event and block back navigation
     window.addEventListener('popstate', preventBack);
-  
-    // Forcefully redirect to the login or home page
-    setTimeout(() => {
-      window.location.replace('/');
-    }, 100); // Small delay ensures the event is bound before redirection
+    window.addEventListener('beforeunload', () => window.history.pushState(null, '', '/')); 
+    window.location.replace('/');
   };
-  
   
 
   return (

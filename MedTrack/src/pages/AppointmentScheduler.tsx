@@ -15,7 +15,9 @@ const AppointmentScheduler: React.FC = () => {
   const [rescheduleTimes, setRescheduleTimes] = useState<{ [key: number]: any[] }>({}); // Times for each appointment
 
   const userID = localStorage.getItem('userID');
-
+  const handleBackToDashboard = () => {
+    window.location.href = '/dashboard';
+  };
   const fetchUpcomingAppointments = () => {
     fetch(`http://127.0.0.1:5000/api/appointments/upcoming?user_id=${userID}`)
       .then((response) => response.json())
@@ -148,8 +150,12 @@ const AppointmentScheduler: React.FC = () => {
 
   return (
     <div className="container mt-5">
-      <h1>Appointment Scheduler</h1>
-
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h1>Appointment Scheduler</h1>
+        <button className="btn btn-secondary" onClick={handleBackToDashboard}>
+         Back to Dashboard
+        </button>
+        </div>
       {/* Message Window */}
       {(message || error) && (
         <div className={`alert ${message ? 'alert-success' : 'alert-danger'}`}>
