@@ -123,8 +123,8 @@ const MedicalHistory: React.FC = () => {
   const [error, setError] = useState<string>('');
 
   useEffect(() => {
-    const userId = localStorage.getItem('userID');
-    if (!userId) {
+    const userID = localStorage.getItem('userID');
+    if (!userID) {
       setError('User not logged in');
       setLoading(false);
       return;
@@ -134,13 +134,13 @@ const MedicalHistory: React.FC = () => {
     const fetchConditions = async () => {
       try {
         const conditionsResponse = await fetch(
-          `http://127.0.0.1:5000/api/medical_history/conditions?user_id=${userId}`
+          `http://127.0.0.1:5000/api/medical_history/conditions?user_id=${userID}`
         );
         const medicationsResponse = await fetch(
-          `http://127.0.0.1:5000/api/medical_history/medications?user_id=${userId}`
+          `http://127.0.0.1:5000/api/medical_history/medications?user_id=${userID}`
         );
         const labResultsResponse = await fetch(
-          `http://127.0.0.1:5000/api/medical_history?user_id=${userId}`
+          `http://127.0.0.1:5000/api/medical_history?user_id=${userID}`
         );
         const conditionsData = await conditionsResponse.json();
         const medicationsData = await medicationsResponse.json();

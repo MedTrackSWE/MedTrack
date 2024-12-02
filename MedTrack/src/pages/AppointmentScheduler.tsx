@@ -305,18 +305,20 @@ const AppointmentScheduler: React.FC = () => {
   const [message, setMessage] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [upcomingAppointment, setUpcomingAppointment] = useState<any>(null);
-  
+  const userID = localStorage.getItem('userID');
   useEffect(() => {
-    fetch('http://localhost:5000/api/hospitals')
+    
+    fetch('http://127.0.0.1:5000/api/appointments/hospitals')
       .then((response) => response.json())
       .then((data) => setHospitals(data))
       .catch(() => setError('Failed to load hospitals.'));
   }, []);
   
   useEffect(() => {
+    // const userID = localStorage.getItem('userID');
     if (selectedHospital && selectedDate) {
       fetch(
-        `http://localhost:5000/api/appointments/available-times?user_id=1&date=${selectedDate}&hospital_id=${selectedHospital}`
+        `http://127.0.0.1:5000/api/appointments/available-times?user_id=${userID}&date=${selectedDate}&hospital_id=${selectedHospital}`
       )
         .then((response) => response.json())
         .then((data) => setAvailableTimes(data))
@@ -325,7 +327,8 @@ const AppointmentScheduler: React.FC = () => {
   }, [selectedHospital, selectedDate]);
   
   useEffect(() => {
-    fetch('http://localhost:5000/api/appointments/upcoming?user_id=1')
+    // const userID = localStorage.getItem('userID');
+    fetch(`http://127.0.0.1:5000/api/appointments/upcoming?user_id=${userID}` )
       .then((response) => response.json())
       .then((data) => setUpcomingAppointment(data))
       .catch(() => setError('Failed to load upcoming appointment.'));
@@ -343,7 +346,7 @@ const AppointmentScheduler: React.FC = () => {
   
     const appointmentTime = `${selectedDate} ${selectedTime}`;
     try {
-      const response = await fetch('http://localhost:5000/api/appointments/book', {
+      const response = await fetch('http://127.0.0.1:5000/api/appointments/book', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
