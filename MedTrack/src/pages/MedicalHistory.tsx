@@ -174,6 +174,10 @@ const MedicalHistory: React.FC = () => {
     fetchConditions();
   }, []);
 
+  const handleBackToDashboard = () => {
+    window.location.href = '/dashboard';
+  };
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -184,7 +188,13 @@ const MedicalHistory: React.FC = () => {
 
   return (
     <div className="container mt-5">
-      <h1>Patient Information</h1>
+      {/* Back to Dashboard Button */}
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h1>Patient Information</h1>
+        <button className="btn btn-secondary" onClick={handleBackToDashboard}>
+         Back to Dashboard
+        </button>
+      </div>
 
       {/* Tabs */}
       <div className="tabs">
