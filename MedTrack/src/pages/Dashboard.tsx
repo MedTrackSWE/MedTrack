@@ -16,10 +16,26 @@ const Dashboard: React.FC = () => {
     if (sessionStorage.getItem('authToken')) {
       sessionStorage.removeItem('authToken');
     }
-    
-    // Use window.location.replace to prevent back button
-    window.location.replace('/');
-  }
+  
+    // Replace the current state to prevent back navigation
+    window.history.pushState(null, '', '/');
+    window.history.replaceState(null, '', '/');
+  
+    // Clear the browser's history stack to disable the back button
+    const preventBack = () => {
+      window.history.pushState(null, '', '/');
+    };
+  
+    // Listen to the 'popstate' event and block back navigation
+    window.addEventListener('popstate', preventBack);
+  
+    // Forcefully redirect to the login or home page
+    setTimeout(() => {
+      window.location.replace('/');
+    }, 100); // Small delay ensures the event is bound before redirection
+  };
+  
+  
 
   return (
     <div className="container-fluid bg-light min-vh-100 py-4">

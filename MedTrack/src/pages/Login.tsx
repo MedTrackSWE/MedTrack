@@ -130,7 +130,7 @@
 
 // export default App;
 
-import React, { useState, FormEvent } from 'react';
+import React, { useState, FormEvent, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from "../assets/components/Button";
 import Input from "../assets/components/Input";
@@ -145,6 +145,22 @@ const App: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [message, setMessage] = useState<string>('');
+
+  useEffect(() => {
+    // Push a dummy entry to prevent back navigation
+    const preventBack = () => {
+      navigate(window.location.pathname, { replace: true });
+    };
+
+    // Add popstate event listener
+    window.history.pushState(null, '', window.location.href);
+    window.addEventListener('popstate', preventBack);
+
+    return () => {
+      // Cleanup event listener
+      window.removeEventListener('popstate', preventBack);
+    };
+  }, [navigate]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
