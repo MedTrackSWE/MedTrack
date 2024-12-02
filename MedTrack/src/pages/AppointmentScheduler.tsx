@@ -25,7 +25,6 @@ const AppointmentScheduler: React.FC = () => {
       .catch(() => setError('Failed to load upcoming appointments.'));
   };
 
-  // Fetch available times for scheduling and rescheduling
   const fetchAvailableTimes = (hospital_id: number, date: string) => {
     fetch(
       `http://127.0.0.1:5000/api/appointments/available-times?user_id=${userID}&date=${date}&hospital_id=${hospital_id}`
@@ -107,7 +106,7 @@ const AppointmentScheduler: React.FC = () => {
 
       if (response.ok) {
         setMessage('Appointment successfully rescheduled!');
-        fetchUpcomingAppointments();
+        window.location.reload(); // Refresh the page after rescheduling
       } else {
         setError('Failed to reschedule the appointment.');
       }
@@ -129,6 +128,9 @@ const AppointmentScheduler: React.FC = () => {
       if (response.ok) {
         setMessage('Appointment successfully canceled.');
         fetchUpcomingAppointments();
+        if (selectedHospital && selectedDate) {
+          fetchAvailableTimes(selectedHospital, selectedDate);
+        }
       } else {
         setError('Failed to cancel the appointment.');
       }
@@ -236,15 +238,19 @@ const AppointmentScheduler: React.FC = () => {
                     <input
                       type="date"
                       className="form-control"
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const newDate = e.target.value;
                         setRescheduleDetails((prev) => ({
                           ...prev,
                           id: appointment.appointment_id,
                           hospital_id: appointment.hospital_id,
-                          date: e.target.value,
+                          date: newDate,
                           time: '',
-                        }))
-                      }
+                        }));
+                        if (appointment.hospital_id && newDate) {
+                          fetchAvailableTimes(appointment.hospital_id, newDate);
+                        }
+                      }}
                     />
                   </div>
                   <div className="form-group">
@@ -292,7 +298,6 @@ const AppointmentScheduler: React.FC = () => {
 };
 
 export default AppointmentScheduler;
-
 
 // import React, { useState, useEffect, FormEvent } from 'react';
 // import '../tabs.css';
