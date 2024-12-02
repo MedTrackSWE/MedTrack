@@ -28,4 +28,5 @@ def get_medications():
 def get_medical_history():
     user_id = request.args.get('user_id')
     medicalhistory = MedicalRecord.get_medical_history(user_id)
+    print("API Response:", medicalhistory)
     return jsonify(medicalhistory), 200

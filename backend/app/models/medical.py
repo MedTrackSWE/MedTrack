@@ -33,11 +33,7 @@ class MedicalRecord:
             cursor.execute("SELECT history_id FROM Medical_History WHERE user_id = %s", (user_id,))
             history = cursor.fetchone()
             if not history:
-                return {
-                    "doctor_notes": None,
-                    "lab_results": None,
-                    "report_date": None
-                }
+                return []
             history_id = history['history_id']
             query = """ 
             SELECT condition_name, condition_description, diagnosed_date
@@ -68,11 +64,7 @@ class MedicalRecord:
             cursor.execute("SELECT history_id FROM Medical_History WHERE user_id = %s", (user_id,))
             history = cursor.fetchone()
             if not history:
-                return {
-                    "doctor_notes": None,
-                    "lab_results": None,
-                    "report_date": None
-                }
+                return []
             history_id = history['history_id']
             query = """ 
             SELECT medication_name, dosage, start_date, end_date
@@ -100,11 +92,7 @@ class MedicalRecord:
             cursor.execute("SELECT history_id FROM Medical_History WHERE user_id = %s", (user_id,))
             history = cursor.fetchone()
             if not history:
-                return {
-                    "doctor_notes": None,
-                    "lab_results": None,
-                    "report_date": None
-                }
+                return []
             history_id = history['history_id']
             query = """ 
             SELECT doctor_notes, lab_results, report_date

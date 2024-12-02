@@ -161,7 +161,7 @@ const MedicalHistory: React.FC = () => {
         if (labResultsResponse.ok) {
           setLabResults(labResultsData);
         } else {
-          setError(labResultsData.error || 'Failed to load lab resuls.');
+          setError(labResultsData.error || 'Failed to load lab.');
         }
 
       } catch (error) {
