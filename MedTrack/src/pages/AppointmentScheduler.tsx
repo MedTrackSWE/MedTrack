@@ -15,14 +15,25 @@ const AppointmentScheduler: React.FC = () => {
   const [rescheduleTimes, setRescheduleTimes] = useState<{ [key: number]: any[] }>({}); // Times for each appointment
 
   const userID = localStorage.getItem('userID');
+
   const handleBackToDashboard = () => {
     window.location.href = '/dashboard';
   };
+
   const fetchUpcomingAppointments = () => {
     fetch(`http://127.0.0.1:5000/api/appointments/upcoming?user_id=${userID}`)
       .then((response) => response.json())
-      .then((data) => {console.log(data); setUpcomingAppointments(data)})
+      .then((data) => {
+        console.log(data);
+        setUpcomingAppointments(data);
+      })
       .catch(() => setError('Failed to load upcoming appointments.'));
+  };
+
+  const clearMessageAfterTimeout = () => {
+    setTimeout(() => {
+      setMessage('');
+    }, 3000); // Clears the message after 3 seconds
   };
 
   const fetchAvailableTimes = (hospital_id: number, date: string, appointment_id?: number) => {
@@ -32,13 +43,11 @@ const AppointmentScheduler: React.FC = () => {
       .then((response) => response.json())
       .then((data) => {
         if (appointment_id) {
-          // Update times for a specific appointment
           setRescheduleTimes((prev) => ({
             ...prev,
             [appointment_id]: data,
           }));
         } else {
-          // General available times
           setAvailableTimes(data);
         }
       })
@@ -91,6 +100,7 @@ const AppointmentScheduler: React.FC = () => {
         setSelectedDate('');
         setSelectedTime('');
         fetchUpcomingAppointments();
+        clearMessageAfterTimeout();
       } else {
         setError(data.error || 'Failed to book appointment.');
       }
@@ -118,6 +128,7 @@ const AppointmentScheduler: React.FC = () => {
       if (response.ok) {
         setMessage('Appointment successfully rescheduled!');
         window.location.reload(); // Refresh the page after rescheduling
+        clearMessageAfterTimeout();
       } else {
         setError('Failed to reschedule the appointment.');
       }
@@ -139,6 +150,7 @@ const AppointmentScheduler: React.FC = () => {
       if (response.ok) {
         setMessage('Appointment successfully canceled.');
         fetchUpcomingAppointments();
+        clearMessageAfterTimeout();
       } else {
         setError('Failed to cancel the appointment.');
       }
@@ -147,23 +159,34 @@ const AppointmentScheduler: React.FC = () => {
     }
   };
 
+  const formatDate = (dateString: string) => {
+    const options: Intl.DateTimeFormatOptions = {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'GMT', // Force GMT
+      timeZoneName: 'short',
+    };
+    return new Intl.DateTimeFormat('en-US', options).format(new Date(dateString));
+  };
 
   return (
     <div className="container mt-5">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h1>Appointment Scheduler</h1>
         <button className="btn btn-secondary" onClick={handleBackToDashboard}>
-         Back to Dashboard
+          Back to Dashboard
         </button>
-        </div>
-      {/* Message Window */}
+      </div>
       {(message || error) && (
         <div className={`alert ${message ? 'alert-success' : 'alert-danger'}`}>
           {message || error}
         </div>
       )}
 
-      {/* Tabs */}
       <div className="tabs">
         <button
           className={`tab ${activeTab === 'schedule' ? 'active' : ''}`}
@@ -179,7 +202,6 @@ const AppointmentScheduler: React.FC = () => {
         </button>
       </div>
 
-      {/* Content */}
       <div className="tab-content">
         {activeTab === 'schedule' && (
           <div>
@@ -239,12 +261,18 @@ const AppointmentScheduler: React.FC = () => {
             <h2>Your Upcoming Appointments</h2>
             {upcomingAppointments.length > 0 ? (
               upcomingAppointments.map((appointment) => (
-                <div key={appointment.appointment_id} style={{ border: '1px solid #ccc', padding: '10px', marginBottom: '10px' }}>
+                <div
+                  key={appointment.appointment_id}
+                  style={{ border: '1px solid #ccc', padding: '10px', marginBottom: '10px' }}
+                >
                   <p>
-                    <strong>Time:</strong> {appointment.appointment_time}
+                    <strong>Time:</strong> {formatDate(appointment.appointment_time)}
                   </p>
                   <p>
                     <strong>Hospital:</strong> {appointment.hospital_name}
+                  </p>
+                  <p>
+                    <strong>Address:</strong> {appointment.address || 'No address available'}
                   </p>
                   <div className="form-group">
                     <label>Reschedule Date</label>
