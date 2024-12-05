@@ -63,11 +63,13 @@ def book_appointment():
     print(hospital_id)
     
     success = Appointment.book_appointment(user_id, appointment_time, hospital_id)  
-    
-    if success:
+    msg = success['success']
+    if success and msg is not False:
         return jsonify({"message": "Appointment successfully booked"}), 201
+    elif msg is False:
+        return jsonify({"error": "You already have an appointment at this time"}), 500
     else:
-        return jsonify({"error": "Failed to book appointment"}), 500
+        return jsonify({"error": "Failed to book appointment"})
 
 @appointments_bp.route('/reschedule', methods=['POST'])
 def reschedule_appointment():

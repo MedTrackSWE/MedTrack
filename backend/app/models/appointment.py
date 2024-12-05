@@ -119,28 +119,36 @@ ORDER BY
         cursor = connection.cursor()
         
         try:
-            # Check for an existing appointment at the same time and hospital
+            # Check if the user already has an appointment at the same time, regardless of the hospital
             cursor.execute("""
                 SELECT appointment_id FROM Appointments
-                WHERE appointment_time = %s AND hospital_id = %s AND status = 'Scheduled'
-            """, (appointment_time, hospital_id))
+                WHERE appointment_time = %s AND user_id = %s AND status = 'Scheduled'
+            """, (appointment_time, user_id))
             
-            if cursor.fetchone():  # If an appointment exists, prevent double booking
-                print("Appointment already exists at this time and hospital.")
-                return False
+            if cursor.fetchone():  # If a conflicting appointment exists
+                return {
+                    "success": False,
+                    "message": "Appointment conflicts with an existing one. Please choose a different time."
+                }
             
-            # Proceed to book the appointment
+            # Proceed to book the appointment if no conflicts are found
             cursor.execute("""
                 INSERT INTO Appointments (user_id, appointment_time, hospital_id, status)
                 VALUES (%s, %s, %s, 'Scheduled')
             """, (user_id, appointment_time, hospital_id))
             connection.commit()
             
-            return True
+            return {
+                "success": True,
+                "message": "Appointment successfully booked."
+            }
         
         except Exception as e:
             print(f"Error booking appointment: {e}")
-            return False
+            return {
+                "success": False,
+                "message": "An error occurred while booking the appointment. Please try again."
+            }
         
         finally:
             cursor.close()
