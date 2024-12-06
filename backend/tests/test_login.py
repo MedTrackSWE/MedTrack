@@ -1,14 +1,22 @@
 import pytest
 import sys, os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+from mysql.connector import Error
 
-from backend.app.app import app, get_db_connection 
+# Set the current directory to the 'backend' root
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../app')))
+
+
+from app import create_app  # Import the app factory function
+from database import get_db_connection  # Import the database connection function
 
 @pytest.fixture
 def client():
+    app = create_app()  # Create an app instance
     app.config['TESTING'] = True
     client = app.test_client()
 
+    # Initialize database connection
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
 
@@ -30,8 +38,14 @@ def client():
     # Enable foreign key checks after cleanup
     cursor.execute("SET FOREIGN_KEY_CHECKS=1")
 
-    yield client
+    yield client  # Provide the client to the test
 
+    cursor.execute("SET FOREIGN_KEY_CHECKS=0")
+    cursor.execute("DELETE FROM Appointments")
+    cursor.execute("DELETE FROM Users")
+    connection.commit()
+
+    cursor.execute("SET FOREIGN_KEY_CHECKS=1")
     # Restore original data in Users table
     for user in backup_users:
         cursor.execute(
@@ -53,17 +67,16 @@ def client():
 
 def test_database_connection(client):
     try:
-        connection = get_db_connection()  # Use the existing function to get the DB connection
+        connection = get_db_connection()
         assert connection.is_connected()
-    except mysql.connector.Error as err:
+    except Error as err:
         pytest.fail(f"Database connection failed: {err}")
     finally:
         if connection.is_connected():
             connection.close()
 
 def test_signup_success(client):
-    # Simulate a signup request
-    response = client.post('/api/signup', json={
+    response = client.post('/api/auth/signup', json={
         'email': 'testuser@example.com',
         'password': 'securepassword'
     })
@@ -72,13 +85,12 @@ def test_signup_success(client):
     assert b'User created successfully' in response.data
 
 def test_signup_user_already_exists(client):
-    # Simulate signup for the same user twice to test duplicate case
-    client.post('/api/signup', json={
+    client.post('/api/auth/signup', json={
         'email': 'testuser@example.com',
         'password': 'securepassword'
     })
     
-    response = client.post('/api/signup', json={
+    response = client.post('/api/auth/signup', json={
         'email': 'testuser@example.com',
         'password': 'securepassword'
     })
@@ -87,14 +99,12 @@ def test_signup_user_already_exists(client):
     assert b'User already exists' in response.data
 
 def test_login_success(client):
-    # First, signup a user
-    client.post('/api/signup', json={
+    client.post('/api/auth/signup', json={
         'email': 'testuser@example.com',
         'password': 'securepassword'
     })
     
-    # Now, attempt login
-    response = client.post('/api/login', json={
+    response = client.post('/api/auth/login', json={
         'email': 'testuser@example.com',
         'password': 'securepassword'
     })
@@ -103,14 +113,12 @@ def test_login_success(client):
     assert b'Login successful' in response.data
 
 def test_login_invalid_credentials(client):
-    # First, signup a user
-    client.post('/api/signup', json={
+    client.post('/api/auth/signup', json={
         'email': 'testuser@example.com',
         'password': 'securepassword'
     })
     
-    # Attempt login with wrong password
-    response = client.post('/api/login', json={
+    response = client.post('/api/auth/login', json={
         'email': 'testuser@example.com',
         'password': 'wrongpassword'
     })
