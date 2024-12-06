@@ -3,6 +3,7 @@ from datetime import timedelta
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from database import get_db_connection
+from datetime import datetime
 class Appointment:
     
     @staticmethod
@@ -119,6 +120,15 @@ ORDER BY
         cursor = connection.cursor()
         
         try:
+            appointment_datetime = datetime.strptime(appointment_time, '%Y-%m-%d %H:%M:%S')
+            current_datetime = datetime.now()
+
+            # Check if the appointment time is in the past
+            if appointment_datetime < current_datetime:
+                return {
+                    "success": False,
+                    "message": "Cannot book an appointment in the past. Please choose a future time."
+                }
             # Check if the user already has an appointment at the same time, regardless of the hospital
             cursor.execute("""
                 SELECT appointment_id FROM Appointments

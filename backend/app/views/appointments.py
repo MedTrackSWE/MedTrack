@@ -67,7 +67,7 @@ def book_appointment():
     if success and msg is not False:
         return jsonify({"message": "Appointment successfully booked"}), 201
     elif msg is False:
-        return jsonify({"error": "You already have an appointment at this time"}), 500
+        return jsonify({"error": success['message']}), 500
     else:
         return jsonify({"error": "Failed to book appointment"})
 
